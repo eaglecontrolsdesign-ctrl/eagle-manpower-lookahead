@@ -1,0 +1,60 @@
+.pill-input,
+.pill-select {
+  border-radius: 22px;
+  padding: 7px 16px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.pill-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238494a8'%3e%3cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.pill-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--panel2);
+  border-radius: 22px;
+  padding: 3px;
+}
+
+.pill-tab {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pill-tab.on {
+  background: var(--accent);
+  color: #071018;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 100px;
+  background: var(--panel2);
+  overflow: hidden;
+}
+
+.progress-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--good), var(--accent));
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar.over > i {
+  background: linear-gradient(90deg, var(--warn), var(--bad));
+}

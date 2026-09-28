@@ -1,0 +1,75 @@
+/* Design tokens ported verbatim from Project Tracker's "Signal Room" theme.
+   :root = dark (default), body.theme-light = light mode. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0e13;
+  --panel: #131922;
+  --panel2: #1a222d;
+  --border: #242e3b;
+  --grid-line: #3a4757;
+  --text: #eaf1f8;
+  --muted: #8494a8;
+  --accent: #5fa3e8;
+  --good: #b4cc30;
+  --warn: #f5a524;
+  --bad: #ff5a5f;
+  --na: #39465a;
+  --hover-a: rgba(95, 163, 232, 0.04);
+  --hover-b: rgba(95, 163, 232, 0.07);
+  --hover-c: rgba(95, 163, 232, 0.1);
+  --glow-blue: #5fa3e8;
+  --glow-green: #b4cc30;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 14px;
+  --rail: #070a10;
+  --rail-soft: #0b0e13;
+  --sidebar-w: 244px;
+  --sidebar-w-collapsed: 90px;
+
+  --eagle-blue: #3c78b4;
+  --eagle-blue-lt: #5fa3e8;
+  --eagle-lime: #b4cc30;
+  --eagle-lime-lt: #d2ec4a;
+  --blue-glow: rgba(60, 120, 180, 0.4);
+  --lime-glow: rgba(180, 204, 48, 0.3);
+
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Manrope', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+:root:not([data-theme='light']) {
+  color-scheme: dark;
+}
+
+body.theme-light,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f4f7fa;
+  --panel: #ffffff;
+  --panel2: #f4f7fa;
+  --border: #d3dee9;
+  --grid-line: #b7c4d3;
+  --text: #101822;
+  --muted: #5c6b7c;
+  --accent: #2f6699;
+  --good: #7c8e1b;
+  --warn: #b7791f;
+  --bad: #c0392f;
+  --na: #c7d2dd;
+  --hover-a: rgba(16, 24, 34, 0.03);
+  --hover-b: rgba(16, 24, 34, 0.05);
+  --hover-c: rgba(16, 24, 34, 0.07);
+  --glow-blue: #2f6699;
+  --glow-green: #7c8e1b;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 34, 0.06), 0 1px 1px rgba(16, 24, 34, 0.04);
+  --shadow-md: 0 8px 27px rgba(16, 24, 34, 0.05);
+  --shadow-lg: 0 25px 70px rgba(16, 24, 34, 0.18);
+  --rail: #1e3a57;
+  --rail-soft: #2f4e70;
+}
