@@ -4,14 +4,21 @@ import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 const UiContext = createContext(null)
 
 export function UiProvider({ children }) {
-  const [activeView, setActiveView] = useState('dashboard') // dashboard | board | ops | alerts | reports | admin
+  const [activeView, setActiveView] = useState('dashboard') // dashboard | board | pmdemand | ops | alerts | reports | admin
   const [boardView, setBoardView] = useLocalStorageState('eagle_mc_boardview', 'people') // people | projects | heatmap
-  const [horizonWeeks, setHorizonWeeks] = useLocalStorageState('eagle_mc_horizon', 4)
+  const [horizonWeeks, setHorizonWeeksRaw] = useLocalStorageState('eagle_mc_horizon', 4)
+  const [weekOffset, setWeekOffset] = useState(0) // 1-week board view only — lets you page to past/future weeks
+
+  function setHorizonWeeks(n) {
+    setHorizonWeeksRaw(n)
+    setWeekOffset(0)
+  }
   const [officeFilter, setOfficeFilter] = useLocalStorageState('eagle_mc_office', '')
   const [jobFilter, setJobFilter] = useLocalStorageState('eagle_mc_job', '')
   const [utilizationFilter, setUtilizationFilter] = useState('')
   const [expandedWeek, setExpandedWeek] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorageState('eagle_mc_sidebar_collapsed', false)
+  const [jobTrayOpen, setJobTrayOpen] = useLocalStorageState('eagle_mc_jobtray_open', false)
 
   const [employeeId, setEmployeeId] = useState(null)
   const [demand, setDemand] = useState(null) // { projectId, week }
@@ -41,6 +48,8 @@ export function UiProvider({ children }) {
     setBoardView,
     horizonWeeks,
     setHorizonWeeks,
+    weekOffset,
+    setWeekOffset,
     officeFilter,
     setOfficeFilter,
     jobFilter,
@@ -52,6 +61,8 @@ export function UiProvider({ children }) {
     setExpandedWeek,
     sidebarCollapsed,
     setSidebarCollapsed,
+    jobTrayOpen,
+    setJobTrayOpen,
     employeeId,
     openEmployee,
     closeEmployee,

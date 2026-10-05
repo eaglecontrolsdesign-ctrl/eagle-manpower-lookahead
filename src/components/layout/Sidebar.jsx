@@ -8,13 +8,14 @@ import { getAttentionAlerts } from '../../engine/alerts.js'
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '◈', label: 'Dashboard' },
   { key: 'board', icon: '☷', label: 'Manpower Board' },
+  { key: 'pmdemand', icon: '▦', label: 'PM Demand' },
+  { key: 'admin', icon: '⚙', label: 'Administration' },
   { key: 'ops', icon: '◉', label: 'Ops Intelligence' },
 ]
 
 const WORKSPACE_ITEMS = [
   { key: 'alerts', icon: '⚠', label: 'Alerts' },
   { key: 'reports', icon: '▤', label: 'Reports' },
-  { key: 'admin', icon: '⚙', label: 'Administration' },
 ]
 
 export default function Sidebar() {

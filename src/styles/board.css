@@ -40,6 +40,32 @@
   white-space: nowrap;
 }
 
+.week-demand-summary {
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.week-demand-summary:hover {
+  color: var(--text);
+}
+
+.week-demand-summary b {
+  color: var(--text);
+}
+
+.week-demand-summary .gap {
+  color: var(--bad);
+}
+
+.week-demand-summary .draft {
+  color: var(--warn);
+}
+
 .board-table td.person-cell,
 .board-table th.person-th {
   position: sticky;
@@ -179,74 +205,62 @@
   min-width: 0;
 }
 
+/* Shared panel look, used both by the Manpower Board's floating Job Tray and by the
+   Administration > Roster page's sticky "Staffing Roles" column. */
 .tray-column {
-  flex: 0 0 auto;
   width: 268px;
-  position: sticky;
-  top: 14px;
-  max-height: calc(100vh - 40px);
+  max-height: 70vh;
   overflow-y: auto;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: 12px;
-  transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tray-column.collapsed {
-  width: 40px;
-  padding: 12px 0;
-  overflow: visible;
+/* Administration > Roster: a static sticky column beside the roster list. */
+.board-split .tray-column {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 14px;
+  max-height: calc(100vh - 40px);
 }
 
-.tray-collapsed-strip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  color: var(--muted);
-}
-
-.tray-collapsed-strip .tray-collapsed-label {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-top: 4px;
-}
-
-@media (max-width: 930px) {
-  .board-split {
-    flex-direction: column;
-  }
-  .tray-column {
-    width: 100%;
-    position: static;
-    max-height: none;
-  }
-  .tray-column.collapsed {
-    width: 100%;
-    padding: 8px 12px;
-  }
-  .tray-column.collapsed .tray-collapsed-strip {
-    flex-direction: row;
-    justify-content: center;
-  }
-  .tray-column.collapsed .tray-collapsed-label {
-    writing-mode: horizontal-tb;
-    margin-top: 0;
-  }
+/* Manpower Board: a freely draggable floating panel, positioned via inline style. */
+.job-tray-float {
+  position: fixed;
+  z-index: 55;
+  box-shadow: var(--shadow-lg);
 }
 
 .tray-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   margin-bottom: 8px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tray-head:active {
+  cursor: grabbing;
+}
+
+.tray-head .tray-drag-handle {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 2px;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.tray-head input {
+  cursor: text;
+}
+
+.tray-head button {
+  cursor: pointer;
 }
 
 .tray-group-title {

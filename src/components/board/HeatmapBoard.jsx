@@ -2,6 +2,7 @@ import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { avColor, initials, utilColor } from '../../engine/colors.js'
 import { personUtil } from '../../engine/utilization.js'
+import WeekDemandSummary from './WeekDemandSummary.jsx'
 
 export default function HeatmapBoard({ people, weeks }) {
   const { board } = useBoard()
@@ -14,7 +15,10 @@ export default function HeatmapBoard({ people, weeks }) {
           <tr>
             <th className="person-th">Person</th>
             {weeks.map((w) => (
-              <th key={w.key}>{w.label}</th>
+              <th key={w.key}>
+                {w.label}
+                <WeekDemandSummary wkKey={w.key} />
+              </th>
             ))}
           </tr>
         </thead>

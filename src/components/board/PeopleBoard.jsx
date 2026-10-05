@@ -6,6 +6,7 @@ import { avColor, initials, utilColor, projColor } from '../../engine/colors.js'
 import { dayVal } from '../../engine/schedule.js'
 import { useBoardDnd } from './DndContext.jsx'
 import DayCell from './DayCell.jsx'
+import WeekDemandSummary from './WeekDemandSummary.jsx'
 import NoteModal from '../modals/NoteModal.jsx'
 import AssignmentModal from '../modals/AssignmentModal.jsx'
 
@@ -51,6 +52,7 @@ export default function PeopleBoard({ people, weeks }) {
             {weeks.map((w) => (
               <th key={w.key} colSpan={5}>
                 {w.label}
+                <WeekDemandSummary wkKey={w.key} />
               </th>
             ))}
           </tr>
@@ -117,7 +119,8 @@ export default function PeopleBoard({ people, weeks }) {
                             cursor: 'grab',
                           }}
                           draggable
-                          title={'Drag to reassign all ' + l.name + ' work this horizon'}
+                          title={'Click for PM demand · drag to reassign all ' + l.name + ' work this horizon'}
+                          onClick={() => ui.openDemand(l.pid)}
                           onDragStart={(e) => {
                             dnd.startAssignmentDrag(person.id, l.pid)
                             e.dataTransfer.effectAllowed = 'move'
