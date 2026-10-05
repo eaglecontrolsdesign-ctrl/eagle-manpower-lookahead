@@ -2,6 +2,7 @@ import { dayVal } from '../../engine/schedule.js'
 import { projColor } from '../../engine/colors.js'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useBoardDnd } from './DndContext.jsx'
+import { trackerNoteFor } from '../../engine/trackerNotes.js'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
@@ -25,7 +26,8 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   const value = dayVal(board.days, board.holidays, personId, wkKey, dayIndex)
   const isHoliday = value === '__HOL'
   const info = value && !isHoliday ? findColored(board, value) : null
-  const hasNote = dayIndexes.some((i) => !!board.notes[personId + '|' + wkKey + '|' + i])
+  // the project tracker's own notes become a badge; the dot is for people's notes
+  const { tracker, ownNote: hasNote } = trackerNoteFor(board.notes, personId, wkKey, dayIndexes)
   const rangeLabel = isRun ? DAY_LABELS[dayIndex] + '–' + DAY_LABELS[dayIndexes[dayIndexes.length - 1]] : null
 
   function handleDragStart(e) {
@@ -73,15 +75,24 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
         e.stopPropagation()
         onOpenNote(personId, wkKey, dayIndex)
       }}
-      title={isHoliday ? 'Holiday' : info ? info.name + (rangeLabel ? ' · ' + rangeLabel : '') + ' · double-click to add a note' : 'Click to assign'}
+      title={
+        isHoliday
+          ? 'Holiday'
+          : info
+            ? info.name + (rangeLabel ? ' · ' + rangeLabel : '') + (tracker ? '\n' + tracker.text : '') + '\n(double-click to add a note)'
+            : 'Click to assign'
+      }
     >
       {isHoliday ? (
         <div className="chip" style={{ background: 'var(--na)', borderColor: 'var(--na)', color: 'var(--muted)', fontSize: 10 }}>
           Holiday
         </div>
       ) : info ? (
-        <div className="chip" style={{ '--chip-color': info.color }}>
+        <div className={'chip' + (tracker ? ' chip--' + tracker.kind : '')} style={{ '--chip-color': info.color }}>
           {info.name}
+          {tracker && (
+            <span className={'chip-tracker ' + tracker.kind}>{tracker.kind === 'conflict' ? '⚠ Tracker wants here' : '📅 Tracker'}</span>
+          )}
           {hasNote && <span className="chip-note-dot" />}
         </div>
       ) : null}
