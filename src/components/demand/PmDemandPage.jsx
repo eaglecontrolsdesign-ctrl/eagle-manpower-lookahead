@@ -2,7 +2,8 @@ import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { OFFICES, HORIZON_OPTIONS } from '../../engine/constants.js'
-import { projectDemandData } from '../../engine/demand.js'
+import { projectDemandData, demandRecord, demandHours } from '../../engine/demand.js'
+import { trackerDemand } from '../../engine/trackerNotes.js'
 import KpiCard from '../dashboard/KpiCard.jsx'
 import ProjectsBoard from '../board/ProjectsBoard.jsx'
 
@@ -18,6 +19,18 @@ export default function PmDemandPage() {
   const covered = pd.filter((x) => x.plannedWeeks && x.gap === 0).length
   const totalDemand = pd.reduce((s, x) => s + x.demand, 0)
   const totalGap = pd.reduce((s, x) => s + (x.gap || 0), 0)
+  // what the Project Command Center's schedules asked for (its drafts, and weeks taken over from them)
+  let pccHours = 0
+  let pccWeeks = 0
+  pd.forEach((x) =>
+    weeks.forEach((w) => {
+      const rec = demandRecord(board, x.p.id, w.key)
+      if (trackerDemand(rec)) {
+        pccHours += demandHours(rec)
+        pccWeeks++
+      }
+    })
+  )
 
   return (
     <div className="page">
@@ -57,6 +70,7 @@ export default function PmDemandPage() {
         <KpiCard label="Fully covered" value={covered} />
         <KpiCard label="Total PM demand" value={totalDemand + 'h'} />
         <KpiCard label="Unstaffed demand" value={totalGap + 'h'} />
+        <KpiCard label="From the PCC" value={pccHours + 'h'} sub={pccWeeks + ' project-weeks from the tracker’s schedules'} />
       </div>
 
       <div className="panel-title" style={{ marginBottom: 8 }}>
