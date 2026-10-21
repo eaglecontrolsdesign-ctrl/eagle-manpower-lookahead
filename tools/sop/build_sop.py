@@ -12,8 +12,8 @@ from reportlab.pdfgen import canvas as canvas_mod
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(HERE, "letterhead-logo.png")
 OUT_PATH = os.path.normpath(os.path.join(HERE, "..", "..", "public", "docs", "Eagle-Manpower-Lookahead-SOP.pdf"))
-REV = "Rev 3.1"
-REV_NOTE = "roles (incl. view-only Member and Scheduler) &amp; branches, manpower requests, activity log, Project Command Center (PCC) integration"
+REV = "Rev 3.2"
+REV_NOTE = "roles (incl. view-only Member and Scheduler), display names, protected admin account, multiple planning roles, Service vs. Projects, manpower requests, activity log, PCC integration"
 
 LEFT_MARGIN = 0.75 * inch
 RIGHT_MARGIN = 0.75 * inch
@@ -192,12 +192,17 @@ story.extend(block(
     [
         ("Under Administration &gt; Users:", [
             "Everyone who has signed in appears automatically; to set someone up before their first sign-in, enter their email in Add by email",
-            "Toggle roles with the Scheduler / PM / Coordinator / Admin pills – they combine; Member (none on) is view-only, which is what technicians should have (you cannot change your own roles)",
+            "Enter a display Name in the field beside the email – it replaces the email on requests, the activity log and the sidebar",
+            "Toggle roles with the Scheduler / PM / Coordinator / Admin pills – they combine; Member (none on) is view-only, which is what technicians should have",
             "Set the Branch from the dropdown; All branches means unrestricted editing",
             "A Coordinator must have a branch, or requests for that branch will only reach administrators",
         ]),
         "Remove an account from the list if it should no longer carry a role or branch (the login itself is managed in Firebase Authentication)",
-        "Keep at least one Coordinator per branch and more than one Administrator",
+        ("The account marked Protected is the permanent safety net:", [
+            "Its roles, branch and name cannot be changed or removed from the app, by anyone – so an administrator can never lock everyone out",
+            "Keep its password somewhere safe; use it only to repair access if the other administrators are lost",
+        ]),
+        "Keep at least one Coordinator per branch and more than one Administrator; you may change your own roles, except removing Admin from yourself while you are the only administrator",
     ],
     "Every user listed with the correct role and branch",
 ))
@@ -207,12 +212,14 @@ story.extend(block(
     "Keep the underlying roster and job data current before scheduling.",
     [
         ("Under Administration &gt; Roster:", [
-            "Add, update, or remove personnel and their office / role / skills",
+            "Add, update, or remove personnel and their office / job title / skills",
             "A person\u2019s office is the branch that controls their schedule",
+            "Switch on every planning role a person can fill (the pills on their row) \u2013 the first one on is their primary; PM demand coverage counts them toward whichever of their roles a plan still needs",
             "Maintain the Staffing Roles used for PM demand planning",
         ]),
         ("Under Administration &gt; Projects:", [
             "Add new jobs, set the office (blank = shared across all offices), and tag required skills",
+            "Mark service work (service calls, training, standing service items) as Service with the Project / Service toggle \u2013 it then sits in its own section here and on PM Demand",
             "Choose the Project Manager from the dropdown \u2013 a user with the PM role only sees the projects assigned to them on PM Demand",
         ]),
         ("Under Administration &gt; Overhead:", [
@@ -232,7 +239,7 @@ story.extend(block(
         "Use the Apply To day pills to assign one day or several days at once within that week",
         "Choose the job or overhead to assign, or clear the day",
         "Use the Job Tray (Show/Hide Job Tray) to drag jobs or overhead directly onto a day",
-        "Drag an existing assignment onto another day to reassign it, or onto the trash to remove it",
+        "Drag an existing assignment onto another day to reassign it, or onto the Drop here to clear bar that appears along the bottom of the screen to remove it (Ctrl+Z undoes the last clear)",
         ("Double-click a day (or a merged multi-day block) to add a dispatch note:", [
             "Each joined day gets its own note box \u2013 a 3-day block can carry three different notes",
             "Every day with a note shows its own preview line on the chip (tagged by day when they differ)",
@@ -261,6 +268,7 @@ story.extend(block(
     "Capture each project\u2019s PM-requested staffing needs by week and role.",
     [
         "Open PM Demand from the sidebar, or click a project name / week cell from the board",
+        "Projects are listed first; jobs marked as Service sit in their own section underneath",
         "Users with the PM role see only their assigned projects (the subtitle reads Showing your projects); everyone else sees all projects for the selected office",
         "For the active week, assign a PM / demand owner and set status (Draft or Confirmed)",
         "Add one role requirement row per need, with headcount and hours per person",
@@ -421,7 +429,9 @@ story.append(table(
         ["Answer a request", "Requests -> Needs my action", "Branch Coordinator / Administrator"],
         ["Plan PM demand", "PM Demand, or click a project on the board", "PMs (own projects), Schedulers, Coordinators, Admins"],
         ["Assign a project to a PM", "Administration -> Projects -> Project manager", "Administrator"],
-        ["Set a role or branch", "Administration -> Users", "Administrator"],
+        ["Mark a job as service work", "Administration -> Projects -> Project / Service toggle", "Administrator"],
+        ["Give a person extra planning roles", "Administration -> Roster -> role pills", "Administrator"],
+        ["Set a role, branch or display name", "Administration -> Users", "Administrator"],
         ["See who changed something", "Activity -> filter or search", "Any user"],
         ["Export or restore a backup", "Reports", "Any user (export) / Administrator (restore)"],
     ],
