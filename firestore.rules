@@ -97,15 +97,18 @@ service cloud.firestore {
 
     match /users/{email} {
       allow read: if signedIn();
-      // Admins manage every record: role, branch, add, remove.
-      allow create, update, delete: if isAdmin();
+      // Admins manage every record: roles, branch, name, add, remove — except a protected account
+      // (protected == true), which no client can change or remove at all. That account is the
+      // permanent safety net against admins locking themselves out.
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && resource.data.get('protected', false) != true;
       // Every account registers its own record on first sign-in (so the Users page lists everyone
       // who has ever logged in) and keeps its lastSeenAt current — but can never set its own
       // role(s) or branch. Those fields are admin-only.
       allow create: if signedIn() && email == myId() &&
-        !request.resource.data.keys().hasAny(['role', 'roles', 'branch']);
+        !request.resource.data.keys().hasAny(['role', 'roles', 'branch', 'protected']);
       allow update: if signedIn() && email == myId() &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'roles', 'branch']);
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'roles', 'branch', 'protected']);
     }
 
     match /{document=**} {

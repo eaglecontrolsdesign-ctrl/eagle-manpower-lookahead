@@ -76,13 +76,20 @@ export default function UsersAdmin() {
         users.map((u) => {
           const self = u.id === me
           const roles = userRoles(u)
-          const setRoles = (next) => save(u.id, { roles: next, role: primaryRole(next) }, u.id + ': ' + rolesLabel(next) + (next.includes('coordinator') && !u.branch ? ' — set their branch too' : ''))
+          // A protected account can't be changed from the app at all (also enforced by the rules).
+          const locked = u.protected === true
+          const otherAdmins = users.some((x) => x.id !== u.id && userRoles(x).includes('admin'))
+          const setRoles = (next) => {
+            if (self && roles.includes('admin') && !next.includes('admin') && !otherAdmins) return toast("You're the only admin — add another admin before removing your own admin role", 'error')
+            save(u.id, { roles: next, role: primaryRole(next) }, u.id + ': ' + rolesLabel(next) + (next.includes('coordinator') && !u.branch ? ' — set their branch too' : ''))
+          }
           return (
             <div key={u.id} className="card-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', gap: 10 }}>
               <input
                 key={u.id + '|' + (u.name || '')}
                 className="user-name-input"
                 placeholder="Name"
+                disabled={locked}
                 defaultValue={u.name || ''}
                 title="Display name — shown instead of the email on requests, the activity log and the sidebar"
                 onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
@@ -99,6 +106,11 @@ export default function UsersAdmin() {
                       You
                     </span>
                   )}
+                  {locked && (
+                    <span className="badge warn" style={{ marginLeft: 8 }} title="Protected account: its roles, branch and name can't be changed or removed from the app">
+                      Protected
+                    </span>
+                  )}
                 </div>
                 <div className="person-role">{lastSeen(u.lastSeenAt)}</div>
               </div>
@@ -106,6 +118,7 @@ export default function UsersAdmin() {
                 className="pill-select"
                 value={u.branch || ''}
                 onChange={(e) => save(u.id, { branch: e.target.value }, 'Branch saved for ' + u.id)}
+                disabled={locked}
                 title="Branch this user belongs to"
                 style={{ width: 150 }}
               >
@@ -116,24 +129,24 @@ export default function UsersAdmin() {
                   </option>
                 ))}
               </select>
-              <div className="pill-tabs" title={self ? "You can't change your own roles" : 'Toggle roles: Scheduler (edits the board) · PM (own projects only on PM Demand) · Coordinator (answers manpower requests for their branch) · Admin. None = Member, view only.'}>
-                <button className={'pill-tab' + (!roles.length ? ' on' : '')} disabled={self} onClick={() => setRoles([])}>
+              <div className="pill-tabs" title={locked ? 'Protected account — roles can\'t be changed' : $1}>
+                <button className={'pill-tab' + (!roles.length ? ' on' : '')} disabled={locked} onClick={() => setRoles([])}>
                   Member
                 </button>
-                <button className={'pill-tab' + (roles.includes('scheduler') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'scheduler'))}>
+                <button className={'pill-tab' + (roles.includes('scheduler') ? ' on' : '')} disabled={locked} onClick={() => setRoles(toggleRole(roles, 'scheduler'))}>
                   Scheduler
                 </button>
-                <button className={'pill-tab' + (roles.includes('pm') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'pm'))}>
+                <button className={'pill-tab' + (roles.includes('pm') ? ' on' : '')} disabled={locked} onClick={() => setRoles(toggleRole(roles, 'pm'))}>
                   PM
                 </button>
-                <button className={'pill-tab' + (roles.includes('coordinator') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'coordinator'))}>
+                <button className={'pill-tab' + (roles.includes('coordinator') ? ' on' : '')} disabled={locked} onClick={() => setRoles(toggleRole(roles, 'coordinator'))}>
                   Coordinator
                 </button>
-                <button className={'pill-tab' + (roles.includes('admin') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'admin'))}>
+                <button className={'pill-tab' + (roles.includes('admin') ? ' on' : '')} disabled={locked} onClick={() => setRoles(toggleRole(roles, 'admin'))}>
                   Admin
                 </button>
               </div>
-              <button className="icon-btn" disabled={self} onClick={() => remove(u)} title={self ? "You can't remove yourself" : 'Remove from list'}>
+              <button className="icon-btn" disabled={self || locked} onClick={() => remove(u)} title={locked ? 'Protected account' : self ? "You can't remove yourself" : 'Remove from list'}>
                 &#10005;
               </button>
             </div>
