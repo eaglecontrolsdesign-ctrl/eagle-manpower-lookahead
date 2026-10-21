@@ -9,7 +9,7 @@ import { projectWeekCoverage, coverageClass, coverageLabel } from '../../engine/
 import { personPlanningRoles } from '../../engine/planningRoles.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { projColor } from '../../engine/colors.js'
-import DemandRoleRow from './DemandRoleRow.jsx'
+import DemandRoleRow, { clampInt } from './DemandRoleRow.jsx'
 import CoverageMeter from './CoverageMeter.jsx'
 import { trackerDemand, rolesLine, TRACKER_DEMAND_LABEL } from '../../engine/trackerNotes.js'
 
@@ -63,7 +63,9 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
     if (readOnly) return toast(perms.viewer ? 'Your account is view-only' : 'Read-only: this project belongs to the ' + project.office + ' branch', 'error')
     saveSkills()
     if (rows.length) {
-      setDemand(projectId, activeWeek, { pmId, status, notes: notes.trim(), roles: rows, updatedAt: Date.now() })
+      // The role rows may hold half-typed text while a field is focused; store whole numbers.
+      const roles = rows.map((r) => ({ ...r, heads: clampInt(r.heads, 1, 1, 99), hours: clampInt(r.hours, 40, 1, 80) }))
+      setDemand(projectId, activeWeek, { pmId, status, notes: notes.trim(), roles, updatedAt: Date.now() })
       toast('PM demand saved')
     } else {
       setDemand(projectId, activeWeek, null)
