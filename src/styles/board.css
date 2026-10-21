@@ -498,24 +498,51 @@
   color: var(--bad);
 }
 
+/* Drop target for clearing work: a bar pinned to the bottom of the screen that spans the
+   board's width (the main area, inside the page padding), so there is a big target wherever
+   the chip was picked up. The left edge follows the sidebar as it collapses. */
 .drag-trash {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 22px;
-  border-radius: 100px;
-  background: var(--panel);
-  border: 1px dashed var(--border);
+  bottom: 18px;
+  left: calc(var(--sidebar-w) + 26px);
+  right: 26px;
+  min-height: 64px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 2px dashed var(--border);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(4px);
   z-index: 60;
   display: none;
+  transition: left 0.24s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.12s, background 0.12s;
+}
+
+.sidebar.collapsed ~ .app-main .drag-trash {
+  left: calc(var(--sidebar-w-collapsed) + 26px);
+}
+
+@media (max-width: 930px) {
+  .drag-trash {
+    left: calc(var(--sidebar-w-collapsed) + 26px);
+  }
+}
+
+@media (max-width: 700px) {
+  .drag-trash {
+    left: 14px;
+    right: 14px;
+  }
 }
 
 body.dnd-active .drag-trash {
-  display: block;
+  display: flex;
 }
 
 .drag-trash.hot {
