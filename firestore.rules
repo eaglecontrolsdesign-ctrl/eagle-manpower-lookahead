@@ -18,6 +18,23 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(myId())).data.role == 'admin';
     }
 
+    // Activity log (engine/audit.js): anyone signed in may read it and add entries as themselves;
+    // nothing in it can ever be changed or removed from a client.
+    match /audit/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        request.resource.data.by == myId() &&
+        request.resource.data.keys().hasAll(['by', 'at', 'area', 'action', 'lines', 'expiresAt']);
+      allow update, delete: if false;
+    }
+    // True when the write being evaluated also creates audit/{id} (same batch) as the caller.
+    function auditedBy(id) {
+      return id is string &&
+        !exists(/databases/$(database)/documents/audit/$(id)) &&
+        existsAfter(/databases/$(database)/documents/audit/$(id)) &&
+        getAfter(/databases/$(database)/documents/audit/$(id)).data.by == myId();
+    }
+
     match /boards/{doc} {
       // The whole app lives in this one shared document — it must never be deletable from a
       // client, even an authenticated one. Deleting it is what silently wiped the real roster
@@ -28,10 +45,41 @@ service cloud.firestore {
       // Administration (roster, projects, overhead, staffing roles, holidays) is admin-only —
       // enforced here, not just hidden in the UI. Everything else (days/notes/demands/aiHistory —
       // day-to-day scheduling) stays open to any signed-in user.
+      // Every change must come with its activity-log entry (boards/main.lastAuditId) — a board
+      // write without one is refused, so nothing changes here without a record of who did it.
       allow update: if signedIn() &&
+        auditedBy(request.resource.data.lastAuditId) &&
         (!request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['people', 'projects', 'overhead', 'staffingRoles', 'holidays'])
          || isAdmin());
+    }
+
+    // Manpower requests (engine/requests.js): one document each, so who may do what is decided
+    // per request. Anyone signed in may ask; the requester may reply, withdraw, or acknowledge
+    // the outcome; the coordinator of the branch asked (users/{email}.role == 'coordinator'
+    // with that branch) or an admin may reply, approve, or decline.
+    function myUser() {
+      return get(/databases/$(database)/documents/users/$(myId())).data;
+    }
+    function coordinatesBranch(branch) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(myId())) &&
+        myUser().role == 'coordinator' && myUser().branch == branch;
+    }
+    match /requests/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        request.resource.data.fromEmail == myId() &&
+        request.resource.data.status == 'open';
+      allow update: if signedIn() && resource.data.fromEmail == myId() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thread', 'updatedAt', 'requesterSeen', 'status']) &&
+        (request.resource.data.status == resource.data.status ||
+          (resource.data.status == 'open' && request.resource.data.status == 'cancelled'));
+      allow update: if (isAdmin() || coordinatesBranch(resource.data.toBranch)) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thread', 'updatedAt', 'status', 'resolvedBy', 'resolvedAt', 'requesterSeen']) &&
+        (request.resource.data.status == resource.data.status ||
+          (resource.data.status == 'open' && request.resource.data.status in ['approved', 'declined']));
+      allow delete: if isAdmin();
     }
 
     match /users/{email} {

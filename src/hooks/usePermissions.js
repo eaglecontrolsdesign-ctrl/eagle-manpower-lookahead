@@ -5,9 +5,9 @@ import { isRestricted, personEditable, projectEditable, readOnlyReason } from '.
 // What the signed-in user may edit on the board (engine/permissions.js). Admins and users with
 // no branch may edit everything; a branch user only their branch.
 export function usePermissions() {
-  const { user, isAdmin, branch } = useAuth()
+  const { user, isAdmin, role, branch } = useAuth()
   const { board } = useBoard()
-  const scope = { isAdmin, branch: branch || '', me: userDocId(user && user.email) }
+  const scope = { isAdmin, role, branch: branch || '', me: userDocId(user && user.email) }
   const restricted = isRestricted(scope)
   const findPerson = (id) => (board ? board.people.find((p) => p.id === id) : null)
   return {

@@ -4,7 +4,7 @@ import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 const UiContext = createContext(null)
 
 export function UiProvider({ children }) {
-  const [activeView, setActiveView] = useState('dashboard') // dashboard | board | pmdemand | ops | alerts | reports | admin
+  const [activeView, setActiveView] = useState('dashboard') // dashboard | board | pmdemand | requests | ops | alerts | reports | activity | admin
   const [boardView, setBoardView] = useLocalStorageState('eagle_mc_boardview', 'people') // people | projects | heatmap
   const [horizonWeeks, setHorizonWeeksRaw] = useLocalStorageState('eagle_mc_horizon', 4)
   const [weekOffset, setWeekOffset] = useState(0) // 1-week board view only — lets you page to past/future weeks

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as fbSignOut } from 'firebase/auth'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
+import { writeAudit } from './auditWrite.js'
 
 const AuthContext = createContext(null)
 
@@ -60,18 +61,23 @@ export function AuthProvider({ children }) {
   }, [user])
 
   async function signIn(email, password) {
-    await signInWithEmailAndPassword(auth, email, password)
+    const cred = await signInWithEmailAndPassword(auth, email, password)
+    // Logged on an actual sign-in, not on every page load that restores the session.
+    writeAudit(userDocId(cred.user && cred.user.email), 'auth', 'Signed in', [])
   }
 
   async function signOut() {
+    await writeAudit(userDocId(user && user.email), 'auth', 'Signed out', [])
     await fbSignOut(auth)
   }
 
   const isAdmin = role === 'admin'
   // Project managers only see the projects assigned to them (project.pmEmail) on PM Demand.
   const isPm = role === 'pm'
+  // Coordinators answer manpower requests for their branch (engine/requests.js).
+  const isCoordinator = role === 'coordinator'
 
-  return <AuthContext.Provider value={{ user, loading, role, branch, roleLoading, isAdmin, isPm, signIn, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, role, branch, roleLoading, isAdmin, isPm, isCoordinator, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

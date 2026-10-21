@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { usePermissions } from '../../hooks/usePermissions.js'
+import { useRequests } from '../../context/RequestsContext.jsx'
+import { openRequestsByCell } from '../../engine/requests.js'
+import RequestModal from '../requests/RequestModal.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { personJobUtil, personOverheadUtil } from '../../engine/utilization.js'
 import { avColor, initials, utilColor, projColor } from '../../engine/colors.js'
@@ -40,6 +43,9 @@ export default function PeopleBoard({ people, weeks }) {
   const ui = useUi()
   const dnd = useBoardDnd()
   const perms = usePermissions()
+  const { requests } = useRequests()
+  const requestedByCell = openRequestsByCell(requests)
+  const [requestTarget, setRequestTarget] = useState(null)
   const [noteTarget, setNoteTarget] = useState(null)
   const [assignTarget, setAssignTarget] = useState(null)
 
@@ -156,6 +162,8 @@ export default function PeopleBoard({ people, weeks }) {
                       onOpenNote={(pid, wk, dis) => setNoteTarget({ pid, wk, dis })}
                       onOpenAssign={(pid, wk, dis) => setAssignTarget({ pid, wk, dis })}
                       locked={lock}
+                      requested={dayIndexes.map((di) => requestedByCell[person.id + '|' + w.key + '|' + di]).find(Boolean) || null}
+                      onRequest={perms.restricted ? (pid, wk, dis) => setRequestTarget({ pid, wk, dis }) : undefined}
                     />
                   ))
                 )}
@@ -173,6 +181,7 @@ export default function PeopleBoard({ people, weeks }) {
       </table>
 
       {noteTarget && <NoteModal personId={noteTarget.pid} wkKey={noteTarget.wk} dayIndexes={noteTarget.dis} onClose={() => setNoteTarget(null)} />}
+      {requestTarget && <RequestModal personId={requestTarget.pid} wkKey={requestTarget.wk} dayIndexes={requestTarget.dis} onClose={() => setRequestTarget(null)} />}
       {assignTarget && <AssignmentModal personId={assignTarget.pid} wkKey={assignTarget.wk} dayIndexes={assignTarget.dis} onClose={() => setAssignTarget(null)} />}
     </div>
   )

@@ -11,6 +11,8 @@ import AlertsDrawer from '../alerts/AlertsDrawer.jsx'
 import EmployeeDrawer from '../employee/EmployeeDrawer.jsx'
 import ProjectDemandDrawer from '../demand/ProjectDemandDrawer.jsx'
 import PmDemandPage from '../demand/PmDemandPage.jsx'
+import RequestsPage from '../requests/RequestsPage.jsx'
+import ActivityPage from '../activity/ActivityPage.jsx'
 import AiPlannerPanel from '../ai/AiPlannerPanel.jsx'
 
 export default function AppShell() {
@@ -59,9 +61,11 @@ export default function AppShell() {
         {ui.activeView === 'dashboard' && <Dashboard />}
         {ui.activeView === 'board' && <BoardPage />}
         {ui.activeView === 'pmdemand' && <PmDemandPage />}
+        {ui.activeView === 'requests' && <RequestsPage />}
         {ui.activeView === 'ops' && <OpsIntelligencePanel />}
         {ui.activeView === 'alerts' && <AlertsDrawer />}
         {ui.activeView === 'reports' && <ReportsDrawer />}
+        {ui.activeView === 'activity' && <ActivityPage />}
         {ui.activeView === 'admin' && (isAdmin ? <AdminDrawer /> : <AdminAccessDenied />)}
       </main>
 

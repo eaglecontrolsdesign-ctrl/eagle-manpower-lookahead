@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { doc, onSnapshot, setDoc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, onSnapshot, deleteField, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { defaultBoard } from '../engine/seed.js'
 import { dayKeyOf, noteKeyOf } from '../engine/schedule.js'
@@ -7,6 +7,8 @@ import { demandKey } from '../engine/demand.js'
 import { useAuth, userDocId } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
 import { isRestricted, mapKeyEditable } from '../engine/permissions.js'
+import { buildAuditEntry, describeMapChanges, describeArrayChanges, areaForFields } from '../engine/audit.js'
+import { auditDoc, newAuditRef } from './auditWrite.js'
 
 const BoardContext = createContext(null)
 const BOARD_REF = doc(db, 'boards', 'main')
@@ -39,6 +41,10 @@ export function BoardProvider({ children }) {
   // so an incoming snapshot (which may still carry pre-write data) can never clobber a local
   // edit — every snapshot gets these re-applied on top before it reaches component state.
   const unconfirmedRef = useRef({ map: { days: {}, notes: {}, demands: {} }, array: {} })
+  // The last snapshot exactly as Firestore sent it (no local edits applied) — the "before" side
+  // of the activity-log entry each flush writes (engine/audit.js).
+  const confirmedRef = useRef(null)
+  const beforeRef = useRef({ map: { days: {}, notes: {}, demands: {} }, array: {} })
   const timerRef = useRef(null)
 
   function withUnconfirmed(data) {
@@ -71,6 +77,7 @@ export function BoardProvider({ children }) {
           return
         }
         setMissing(false)
+        confirmedRef.current = snap.data()
         const data = withUnconfirmed(snap.data())
         boardRef.current = data
         setBoard(data)
@@ -84,7 +91,11 @@ export function BoardProvider({ children }) {
   // The only path that may ever create the board document — requires an explicit, deliberate
   // call (a button behind a confirm prompt), never triggered automatically on snapshot.
   function initializeBoard() {
-    return setDoc(BOARD_REF, defaultBoard()).catch(setError)
+    const batch = writeBatch(db)
+    const auditRef = newAuditRef()
+    batch.set(auditRef, auditDoc(buildAuditEntry({ by: scope.me, area: 'admin', action: 'Created a new empty board', lines: [] })))
+    batch.set(BOARD_REF, { ...defaultBoard(), lastAuditId: auditRef.id })
+    return batch.commit().catch(setError)
   }
 
   function flushNow() {
@@ -101,6 +112,8 @@ export function BoardProvider({ children }) {
       if (keys.length) mapToSend[field] = keys.reduce((acc, k) => ((acc[k] = entries[k]), acc), {})
     })
     const arrayToSend = { ...unconfirmedRef.current.array }
+    const beforeSnapshot = beforeRef.current
+    beforeRef.current = { map: { days: {}, notes: {}, demands: {} }, array: {} }
 
     const patch = {}
     Object.entries(mapToSend).forEach(([field, entries]) => {
@@ -113,7 +126,21 @@ export function BoardProvider({ children }) {
     })
     if (Object.keys(patch).length === 0) return
 
-    updateDoc(BOARD_REF, patch)
+    // The activity-log entry for this flush. The rules only accept the board update when the
+    // same batch creates this entry under the signed-in user's identity (boards/main.lastAuditId).
+    const named = boardRef.current || confirmedRef.current || { people: [], projects: [], overhead: [] }
+    const lines = []
+    Object.entries(mapToSend).forEach(([field, entries]) => lines.push(...describeMapChanges(named, field, entries, beforeSnapshot.map[field] || {})))
+    Object.entries(arrayToSend).forEach(([field, val]) => lines.push(...describeArrayChanges(field, beforeSnapshot.array[field], val)))
+    const fields = [...Object.keys(mapToSend), ...Object.keys(arrayToSend)]
+    const auditRef = newAuditRef()
+    const entry = buildAuditEntry({ by: scope.me, area: areaForFields(fields), action: fields.some((f) => !MAP_FIELDS.includes(f)) ? 'Updated ' + fields.filter((f) => !MAP_FIELDS.includes(f)).join(', ') : 'Updated ' + fields.join(', '), lines })
+    const batch = writeBatch(db)
+    batch.set(auditRef, auditDoc(entry))
+    batch.update(BOARD_REF, { ...patch, lastAuditId: auditRef.id })
+
+    batch
+      .commit()
       .then(() => {
         // Only clear entries that are still exactly what we sent — if a newer local edit
         // superseded one in the meantime, leave it for the next flush.
@@ -160,11 +187,13 @@ export function BoardProvider({ children }) {
 
   function markMapEdit(field, key, value) {
     if (!unconfirmedRef.current.map[field]) unconfirmedRef.current.map[field] = {}
+    if (!(key in beforeRef.current.map[field])) beforeRef.current.map[field][key] = ((confirmedRef.current || {})[field] || {})[key]
     unconfirmedRef.current.map[field][key] = value
     scheduleFlush()
   }
 
   function markArrayEdit(field, value) {
+    if (!(field in beforeRef.current.array)) beforeRef.current.array[field] = (confirmedRef.current || {})[field]
     unconfirmedRef.current.array[field] = value
     scheduleFlush()
   }
@@ -173,6 +202,9 @@ export function BoardProvider({ children }) {
 
   function setDay(personId, wkKey, dayIndex, value) {
     const key = dayKeyOf(personId, wkKey, dayIndex)
+    const empty = value == null || value === ''
+    // Clearing a day that is already empty is not a change — don't queue a write (or a log entry).
+    if (empty && !(boardRef.current && boardRef.current.days && boardRef.current.days[key])) return
     if (!mayEdit('days', key)) return
     optimisticUpdate((prev) => {
       const days = { ...prev.days }
@@ -185,6 +217,9 @@ export function BoardProvider({ children }) {
 
   function setNote(personId, wkKey, dayIndex, text) {
     const key = noteKeyOf(personId, wkKey, dayIndex)
+    const current = (boardRef.current && boardRef.current.notes && boardRef.current.notes[key]) || ''
+    // The note editor saves every day it shows, so skip days whose text didn't change.
+    if ((text || '') === current) return
     if (!mayEdit('notes', key)) return
     optimisticUpdate((prev) => {
       const notes = { ...prev.notes }

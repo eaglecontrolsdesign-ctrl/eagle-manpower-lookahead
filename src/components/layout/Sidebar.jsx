@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useTheme } from '../../context/ThemeContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useBoard } from '../../context/BoardContext.jsx'
+import { useRequests } from '../../context/RequestsContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { getAttentionAlerts } from '../../engine/alerts.js'
 
@@ -9,6 +10,7 @@ const NAV_ITEMS = [
   { key: 'dashboard', icon: '◈', label: 'Dashboard' },
   { key: 'board', icon: '☷', label: 'Manpower Board' },
   { key: 'pmdemand', icon: '▦', label: 'PM Demand' },
+  { key: 'requests', icon: '✉', label: 'Requests' },
   { key: 'admin', icon: '⚙', label: 'Administration', adminOnly: true },
   { key: 'ops', icon: '◉', label: 'Ops Intelligence' },
 ]
@@ -16,12 +18,14 @@ const NAV_ITEMS = [
 const WORKSPACE_ITEMS = [
   { key: 'alerts', icon: '⚠', label: 'Alerts' },
   { key: 'reports', icon: '▤', label: 'Reports' },
+  { key: 'activity', icon: '◷', label: 'Activity' },
 ]
 
 export default function Sidebar() {
   const { user, signOut, isAdmin } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { board } = useBoard()
+  const { badgeCount } = useRequests()
   const ui = useUi()
   const weeks = useWeeks(ui.horizonWeeks)
   const alertCount = board ? getAttentionAlerts(board, weeks, board.people).length : 0
@@ -38,7 +42,10 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <button key={item.key} className={'nav-pill' + (ui.activeView === item.key ? ' active' : '')} onClick={() => ui.setActiveView(item.key)}>
             <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
+            <span className="nav-label">
+              {item.label}
+              {item.key === 'requests' && badgeCount ? ' · ' + badgeCount : ''}
+            </span>
           </button>
         ))}
 

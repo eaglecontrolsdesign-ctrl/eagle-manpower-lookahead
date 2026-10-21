@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import { BoardProvider } from './context/BoardContext.jsx'
+import { RequestsProvider } from './context/RequestsContext.jsx'
 import { UiProvider } from './context/UiContext.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -14,9 +15,11 @@ createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <AuthProvider>
           <BoardProvider>
-            <UiProvider>
-              <App />
-            </UiProvider>
+            <RequestsProvider>
+              <UiProvider>
+                <App />
+              </UiProvider>
+            </RequestsProvider>
           </BoardProvider>
         </AuthProvider>
       </ToastProvider>

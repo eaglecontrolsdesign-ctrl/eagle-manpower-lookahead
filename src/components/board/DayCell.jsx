@@ -23,7 +23,9 @@ function findColored(board, pid) {
 // semantics unambiguous.
 // locked: a read-only reason (engine/permissions.js readOnlyReason) when this person is outside
 // the user's branch — the cell then neither opens an editor nor takes part in drag-and-drop.
-export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign, locked }) {
+// requested: an open manpower request covers one of these days (engine/requests.js).
+// onRequest: open the request modal — used instead of the editor when the cell is locked.
+export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign, locked, requested, onRequest }) {
   const { board } = useBoard()
   const dnd = useBoardDnd()
   const toast = useToast()
@@ -78,7 +80,8 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   function handleClick() {
     if (isHoliday) return
     if (locked) {
-      toast(locked, 'error')
+      if (onRequest) onRequest(personId, wkKey, dayIndexes)
+      else toast(locked, 'error')
       return
     }
     // Opening the assignment editor on every click would fire on the first click of a
@@ -101,7 +104,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
 
   return (
     <td
-      className={'day-cell' + (isHoliday ? ' holiday' : !value ? ' empty' : '') + (locked ? ' locked' : '')}
+      className={'day-cell' + (isHoliday ? ' holiday' : !value ? ' empty' : '') + (locked ? ' locked' : '') + (requested ? ' requested' : '')}
       colSpan={dayIndexes.length}
       draggable={!isRun && !!value && !isHoliday && !locked}
       onDragStart={handleDragStart}
@@ -112,7 +115,8 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       title={
-        (locked ? '🔒 ' + locked + '\n' : '') +
+        (requested ? '✉ Manpower request pending' + (requested.fromEmail ? ' from ' + requested.fromEmail : '') + ' — ' + requested.projectName + '\n' : '') +
+        (locked ? '🔒 ' + locked + (onRequest ? ' · click to request them' : '') + '\n' : '') +
         (isHoliday
           ? 'Holiday'
           : info
@@ -131,6 +135,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
         <div className={'chip' + (tracker ? ' chip--' + tracker.kind : '')} style={{ '--chip-color': info.color }}>
           {info.name}
           {tracker && <span className={'chip-tracker ' + tracker.kind}>{tracker.kind === 'conflict' ? '⚠ Tracker wants here' : '📅 Tracker'}</span>}
+          {requested && <span className="chip-request">✉ Requested</span>}
           {hasNote && <span className="chip-note-dot" />}
           {notePreviewLines.map((n, i) => (
             <div key={i} className="chip-note-preview">
@@ -139,6 +144,8 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
             </div>
           ))}
         </div>
+      ) : requested ? (
+        <span className="chip-request floating">✉ Requested</span>
       ) : null}
     </td>
   )
