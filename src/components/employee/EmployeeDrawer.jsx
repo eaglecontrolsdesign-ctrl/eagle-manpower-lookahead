@@ -3,6 +3,7 @@ import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { avColor, initials, utilColor } from '../../engine/colors.js'
 import { personUtil } from '../../engine/utilization.js'
 import { personPlanningRole } from '../../engine/planningRoles.js'
@@ -13,6 +14,7 @@ import MoveWorkSuggestions from './MoveWorkSuggestions.jsx'
 
 export default function EmployeeDrawer({ personId, onClose }) {
   const { board, updatePerson } = useBoard()
+  const { isAdmin } = useAuth()
   const ui = useUi()
   const toast = useToast()
   const weeks = useWeeks(ui.horizonWeeks)
@@ -86,7 +88,7 @@ export default function EmployeeDrawer({ personId, onClose }) {
         <div style={{ marginBottom: 8 }}>
           {(person.skills || []).length ? person.skills.map((s) => <span key={s} className="skill-chip">{s}</span>) : <span className="skill-chip empty">No skills tagged yet</span>}
         </div>
-        <button className="btn" onClick={editSkills} style={{ marginBottom: 16 }}>
+        <button className="btn" onClick={editSkills} disabled={!isAdmin} title={isAdmin ? '' : 'Only administrators edit skills (Administration › Roster)'} style={{ marginBottom: 16 }}>
           Edit skills
         </button>
 

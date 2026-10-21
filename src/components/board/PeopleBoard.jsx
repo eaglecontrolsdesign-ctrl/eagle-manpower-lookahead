@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
+import { usePermissions } from '../../hooks/usePermissions.js'
 import { useUi } from '../../context/UiContext.jsx'
 import { personJobUtil, personOverheadUtil } from '../../engine/utilization.js'
 import { avColor, initials, utilColor, projColor } from '../../engine/colors.js'
@@ -38,6 +39,7 @@ export default function PeopleBoard({ people, weeks }) {
   const { board } = useBoard()
   const ui = useUi()
   const dnd = useBoardDnd()
+  const perms = usePermissions()
   const [noteTarget, setNoteTarget] = useState(null)
   const [assignTarget, setAssignTarget] = useState(null)
 
@@ -68,6 +70,7 @@ export default function PeopleBoard({ people, weeks }) {
         </thead>
         <tbody>
           {people.map((person) => {
+            const lock = perms.lockReason(person.id)
             const jobUtil = personJobUtil(board, person, weeks)
             const overheadUtil = personOverheadUtil(board, person, weeks)
             const projectIds = new Set()
@@ -99,7 +102,10 @@ export default function PeopleBoard({ people, weeks }) {
                     </span>
                     <div>
                       <div className="person-name">{person.name}</div>
-                      <div className="person-role">{person.office || 'Charlotte'}</div>
+                      <div className="person-role">
+                        {person.office || 'Charlotte'}
+                        {lock ? ' · read-only' : ''}
+                      </div>
                     </div>
                     <div className="util-pill-group">
                       <span className="util-pill" style={{ background: utilColor(jobUtil) }} title={'Project / job utilization: ' + jobUtil + '%'}>
@@ -123,10 +129,11 @@ export default function PeopleBoard({ people, weeks }) {
                             color: 'color-mix(in srgb, var(--chip-color) 78%, var(--text) 22%)',
                             cursor: 'grab',
                           }}
-                          draggable
-                          title={'Click for PM demand · drag to reassign all ' + l.name + ' work this horizon'}
+                          draggable={!lock}
+                          title={'Click for PM demand' + (lock ? '' : ' · drag to reassign all ' + l.name + ' work this horizon')}
                           onClick={() => ui.openDemand(l.pid)}
                           onDragStart={(e) => {
+                            if (lock) return e.preventDefault()
                             dnd.startAssignmentDrag(person.id, l.pid)
                             e.dataTransfer.effectAllowed = 'move'
                             e.dataTransfer.setData('text/plain', l.pid)
@@ -148,6 +155,7 @@ export default function PeopleBoard({ people, weeks }) {
                       dayIndexes={dayIndexes}
                       onOpenNote={(pid, wk, dis) => setNoteTarget({ pid, wk, dis })}
                       onOpenAssign={(pid, wk, dis) => setAssignTarget({ pid, wk, dis })}
+                      locked={lock}
                     />
                   ))
                 )}

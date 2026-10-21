@@ -1,6 +1,7 @@
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
+import { usePermissions } from '../../hooks/usePermissions.js'
 import { dayVal } from '../../engine/schedule.js'
 import { personUtil } from '../../engine/utilization.js'
 import { BoardDndProvider } from './DndContext.jsx'
@@ -14,6 +15,7 @@ import DragTrash from './DragTrash.jsx'
 export default function BoardPage() {
   const { board } = useBoard()
   const ui = useUi()
+  const perms = usePermissions()
   const weeks = useWeeks(ui.horizonWeeks, ui.horizonWeeks === 1 ? ui.weekOffset : 0)
 
   function personOnJob(personId) {
@@ -35,7 +37,14 @@ export default function BoardPage() {
         <div className="page-header">
           <div>
             <div className="page-title">Manpower Board</div>
-            <div className="page-subtitle">{weeks[0]?.label} – {weeks[weeks.length - 1]?.label}</div>
+            <div className="page-subtitle">
+              {weeks[0]?.label} – {weeks[weeks.length - 1]?.label}
+              {perms.restricted && (
+                <span className="scope-badge" title="Your account is assigned to this branch; other branches are read-only for you">
+                  Editing {perms.branch} only
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <BoardHeader />

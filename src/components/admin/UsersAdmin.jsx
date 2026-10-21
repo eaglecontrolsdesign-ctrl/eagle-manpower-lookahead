@@ -55,7 +55,8 @@ export default function UsersAdmin() {
       <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 0, marginBottom: 14 }}>
         Everyone who has signed in appears here automatically. <b>Admin</b> unlocks this Administration page. <b>PM</b>{' '}
         sees only their own projects on PM Demand (assign projects to them under Projects). Everyone keeps full
-        scheduling access. <b>Branch</b> is the office a user belongs to. Accounts themselves are still
+        scheduling access. <b>Branch</b> limits editing: a user with a branch can only change that branch's people and
+        projects (other branches are read-only for them); <i>All branches</i> is unrestricted. Accounts themselves are still
         created in Firebase Authentication — to add someone before their first sign-in, enter their email below.
       </p>
 

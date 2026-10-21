@@ -4,6 +4,9 @@ import { db } from '../firebase.js'
 import { defaultBoard } from '../engine/seed.js'
 import { dayKeyOf, noteKeyOf } from '../engine/schedule.js'
 import { demandKey } from '../engine/demand.js'
+import { useAuth, userDocId } from './AuthContext.jsx'
+import { useToast } from './ToastContext.jsx'
+import { isRestricted, mapKeyEditable } from '../engine/permissions.js'
 
 const BoardContext = createContext(null)
 const BOARD_REF = doc(db, 'boards', 'main')
@@ -18,6 +21,17 @@ export function BoardProvider({ children }) {
   // "ready" so the UI can show a loud warning instead of silently recreating a fresh demo board,
   // which is what let a deleted document go unnoticed before.
   const [missing, setMissing] = useState(false)
+
+  // Branch-restricted editing (engine/permissions.js): a user with a branch may only change
+  // people and projects in that branch. Refused writes never reach local state or Firestore.
+  const { user, isAdmin, branch } = useAuth()
+  const toast = useToast()
+  const scope = { isAdmin, branch: branch || '', me: userDocId(user && user.email) }
+  function mayEdit(field, key) {
+    if (!isRestricted(scope) || mapKeyEditable(boardRef.current || { people: [], projects: [] }, field, key, scope)) return true
+    toast('Read-only: that belongs to another branch (you can edit ' + scope.branch + ')', 'error')
+    return false
+  }
 
   const boardRef = useRef(null)
   // Local edits not yet guaranteed to be reflected by the next Firestore snapshot — covers both
@@ -159,6 +173,7 @@ export function BoardProvider({ children }) {
 
   function setDay(personId, wkKey, dayIndex, value) {
     const key = dayKeyOf(personId, wkKey, dayIndex)
+    if (!mayEdit('days', key)) return
     optimisticUpdate((prev) => {
       const days = { ...prev.days }
       if (value == null || value === '') delete days[key]
@@ -170,6 +185,7 @@ export function BoardProvider({ children }) {
 
   function setNote(personId, wkKey, dayIndex, text) {
     const key = noteKeyOf(personId, wkKey, dayIndex)
+    if (!mayEdit('notes', key)) return
     optimisticUpdate((prev) => {
       const notes = { ...prev.notes }
       if (!text) delete notes[key]
@@ -181,6 +197,7 @@ export function BoardProvider({ children }) {
 
   function setDemand(pid, wkKey, patchOrNull) {
     const key = demandKey(pid, wkKey)
+    if (!mayEdit('demands', key)) return
     optimisticUpdate((prev) => {
       const demands = { ...prev.demands }
       if (patchOrNull == null) delete demands[key]
@@ -232,6 +249,25 @@ export function BoardProvider({ children }) {
   // in place) so map-field deletions/changes are correctly detected and queued.
   function applyPatch(partial) {
     const prevSnapshot = boardRef.current
+    // A branch user's bulk edits (drag-and-drop swaps, AI plans, imports) keep only the entries
+    // inside their branch; anything else is left exactly as it was.
+    if (isRestricted(scope) && prevSnapshot) {
+      let blocked = 0
+      partial = { ...partial }
+      MAP_FIELDS.forEach((field) => {
+        if (!partial[field]) return
+        const prevMap = prevSnapshot[field] || {}
+        const next = { ...partial[field] }
+        new Set([...Object.keys(prevMap), ...Object.keys(next)]).forEach((k) => {
+          if (next[k] === prevMap[k] || mapKeyEditable(prevSnapshot, field, k, scope)) return
+          blocked++
+          if (prevMap[k] === undefined) delete next[k]
+          else next[k] = prevMap[k]
+        })
+        partial[field] = next
+      })
+      if (blocked) toast(blocked + (blocked === 1 ? ' change' : ' changes') + ' outside your branch (' + scope.branch + ') skipped', 'error')
+    }
     optimisticUpdate((prev) => ({ ...prev, ...partial }))
     Object.entries(partial).forEach(([field, nextValue]) => {
       if (MAP_FIELDS.includes(field)) {

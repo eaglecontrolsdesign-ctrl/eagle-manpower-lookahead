@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { usePermissions } from '../../hooks/usePermissions.js'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { projectWeekCoverage, coverageClass, coverageLabel } from '../../engine/demand.js'
 import { personPlanningRole } from '../../engine/planningRoles.js'
@@ -15,6 +17,8 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   const { board, setDemand, updateProject } = useBoard()
   const ui = useUi()
   const toast = useToast()
+  const { isAdmin } = useAuth()
+  const perms = usePermissions()
   const weeks = useWeeks(ui.horizonWeeks)
   const [activeWeek, setActiveWeek] = useState(week || weeks[0].key)
   const [rows, setRows] = useState([])
@@ -43,12 +47,20 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   }, [project])
 
   if (!project) return null
+  // Another branch's project (engine/permissions.js): everything shows, nothing saves.
+  const readOnly = !perms.canEditProject(projectId)
 
   function saveSkills() {
-    updateProject(projectId, { requiredSkills: normalizeSkills(skillsInput) })
+    // The projects list is admin-only in the Firestore rules, so only an admin sends it — and only
+    // when the skills actually changed, or the write would be refused and the demand save with it.
+    if (!isAdmin) return
+    const next = normalizeSkills(skillsInput)
+    if (JSON.stringify(next) === JSON.stringify(project.requiredSkills || [])) return
+    updateProject(projectId, { requiredSkills: next })
   }
 
   function save() {
+    if (readOnly) return toast('Read-only: this project belongs to the ' + project.office + ' branch', 'error')
     saveSkills()
     if (rows.length) {
       setDemand(projectId, activeWeek, { pmId, status, notes: notes.trim(), roles: rows, updatedAt: Date.now() })
@@ -60,6 +72,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   }
 
   function clearWeek() {
+    if (readOnly) return toast('Read-only: this project belongs to the ' + project.office + ' branch', 'error')
     if (!window.confirm('Clear the PM demand plan for this project and week?')) return
     setDemand(projectId, activeWeek, null)
     setRows([])
@@ -83,10 +96,17 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
           </button>
         </div>
 
+        {readOnly && (
+          <div className="tracker-banner readonly">
+            <b>Read-only.</b> This project belongs to the {project.office} branch; you can edit {perms.branch}. Ask an administrator to
+            make it shared or set you as its project manager.
+          </div>
+        )}
+
         <div className="panel-title" style={{ marginTop: 10 }}>
           Project skill requirements
         </div>
-        <input style={{ width: '100%', marginBottom: 6 }} value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} onBlur={saveSkills} placeholder="Niagara N4, Distech, Startup, Commissioning…" />
+        <input style={{ width: '100%', marginBottom: 6 }} value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} onBlur={saveSkills} disabled={!isAdmin} title={isAdmin ? '' : 'Only administrators change project skills'} placeholder="Niagara N4, Distech, Startup, Commissioning…" />
         <div style={{ marginBottom: 10 }}>
           {(project.requiredSkills || []).length ? project.requiredSkills.map((s) => <span key={s} className="skill-chip req">{s}</span>) : <span className="skill-chip empty">No project skills tagged</span>}
         </div>
@@ -131,7 +151,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
         <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
           <label style={{ flex: 1, minWidth: 180 }}>
             <div className="panel-title">PM / demand owner</div>
-            <select value={pmId} onChange={(e) => setPmId(e.target.value)} style={{ width: '100%' }}>
+            <select value={pmId} onChange={(e) => setPmId(e.target.value)} disabled={readOnly} style={{ width: '100%' }}>
               <option value="">Select PM / owner</option>
               {board.people.map((per) => (
                 <option key={per.id} value={per.id}>
@@ -142,7 +162,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
           </label>
           <label style={{ flex: 1, minWidth: 160 }}>
             <div className="panel-title">Planning status</div>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: '100%' }}>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} disabled={readOnly} style={{ width: '100%' }}>
               <option value="draft">Draft estimate</option>
               <option value="confirmed">Confirmed need</option>
             </select>
@@ -159,20 +179,20 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
         {rows.map((row, i) => (
           <DemandRoleRow key={i} row={row} roles={board.staffingRoles} onChange={(next) => setRows(rows.map((r, ri) => (ri === i ? next : r)))} onRemove={() => setRows(rows.filter((_, ri) => ri !== i))} />
         ))}
-        <button className="btn ghost" onClick={() => setRows([...rows, { role: board.staffingRoles[0], heads: 1, hours: 40 }])}>
+        <button className="btn ghost" disabled={readOnly} onClick={() => setRows([...rows, { role: board.staffingRoles[0], heads: 1, hours: 40 }])}>
           + Add role requirement
         </button>
 
         <label style={{ display: 'block', marginTop: 12 }}>
           <div className="panel-title">PM notes / assumptions</div>
-          <textarea rows={3} style={{ width: '100%' }} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Upcoming phase, timing, skills, travel, confidence, or known constraints…" />
+          <textarea rows={3} style={{ width: '100%' }} value={notes} onChange={(e) => setNotes(e.target.value)} disabled={readOnly} placeholder="Upcoming phase, timing, skills, travel, confidence, or known constraints…" />
         </label>
 
         <div className="modal-actions">
-          <button className="btn" onClick={clearWeek}>
+          <button className="btn" disabled={readOnly} onClick={clearWeek}>
             Clear week
           </button>
-          <button className="btn primary" onClick={save}>
+          <button className="btn primary" disabled={readOnly} onClick={save}>
             Save PM demand
           </button>
         </div>

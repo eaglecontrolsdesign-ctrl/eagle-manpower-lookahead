@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { usePermissions } from '../../hooks/usePermissions.js'
 import { dayVal, dayKeyOf, noteKeyOf } from '../../engine/schedule.js'
 import { dateOf } from '../../engine/dates.js'
 
@@ -14,6 +15,7 @@ function nameOf(board, pid) {
 export function BoardDndProvider({ children }) {
   const { board, setDay, setNote, applyPatch } = useBoard()
   const toast = useToast()
+  const perms = usePermissions()
   const [dayDrag, setDayDrag] = useState(null)
   const [dragAssignment, setDragAssignment] = useState(null)
   const [jobDrag, setJobDrag] = useState(null)
@@ -22,7 +24,7 @@ export function BoardDndProvider({ children }) {
 
   function startDayDrag(personId, wk, i) {
     const value = dayVal(board.days, board.holidays, personId, wk, i)
-    if (!value || value === '__HOL') return false
+    if (!value || value === '__HOL' || !perms.canEditPerson(personId)) return false
     setDayDrag({ personId, wk, i, value })
     return true
   }
@@ -37,6 +39,11 @@ export function BoardDndProvider({ children }) {
       return
     }
     if (!dayDrag) return
+    if (!perms.canEditPerson(targetId)) {
+      toast(perms.lockReason(targetId), 'error')
+      endDayDrag()
+      return
+    }
     const source = dayDrag
     if (source.personId === targetId && source.wk === targetWk && source.i === targetI) {
       endDayDrag()
@@ -92,6 +99,11 @@ export function BoardDndProvider({ children }) {
   }
   function dropAssignment(targetId, weeks) {
     if (!dragAssignment || dragAssignment.perId === targetId) return
+    if (!perms.canEditPerson(targetId)) {
+      toast(perms.lockReason(targetId), 'error')
+      endAssignmentDrag()
+      return
+    }
     const src = board.people.find((p) => p.id === dragAssignment.perId)
     const dst = board.people.find((p) => p.id === targetId)
     const project = board.projects.find((p) => p.id === dragAssignment.pid) || board.overhead.find((p) => p.id === dragAssignment.pid)
@@ -122,6 +134,11 @@ export function BoardDndProvider({ children }) {
   function dropJobOnDay(targetId, targetWk, targetI) {
     const dragged = jobDrag
     if (!dragged) return
+    if (!perms.canEditPerson(targetId)) {
+      toast(perms.lockReason(targetId), 'error')
+      endJobDrag()
+      return
+    }
     const targetValue = dayVal(board.days, board.holidays, targetId, targetWk, targetI)
     const person = board.people.find((p) => p.id === targetId)
     if (targetValue === '__HOL') {

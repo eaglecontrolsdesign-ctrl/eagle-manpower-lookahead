@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { dayVal } from '../../engine/schedule.js'
 import { projColor } from '../../engine/colors.js'
 import { useBoard } from '../../context/BoardContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 import { useBoardDnd } from './DndContext.jsx'
 import { trackerNoteKind, trackerNoteFor } from '../../engine/trackerNotes.js'
 
@@ -20,9 +21,12 @@ function findColored(board, pid) {
 // share the same assignment. Runs longer than one day render as a single wider cell, and are
 // edited/cleared as a block; drag-and-drop stays scoped to single-day cells to keep the swap
 // semantics unambiguous.
-export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign }) {
+// locked: a read-only reason (engine/permissions.js readOnlyReason) when this person is outside
+// the user's branch — the cell then neither opens an editor nor takes part in drag-and-drop.
+export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign, locked }) {
   const { board } = useBoard()
   const dnd = useBoardDnd()
+  const toast = useToast()
   const clickTimerRef = useRef(null)
   useEffect(() => () => clearTimeout(clickTimerRef.current), [])
   const dayIndex = dayIndexes[0]
@@ -47,7 +51,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   const rangeLabel = isRun ? DAY_LABELS[dayIndex] + '–' + DAY_LABELS[dayIndexes[dayIndexes.length - 1]] : null
 
   function handleDragStart(e) {
-    const ok = dnd.startDayDrag(personId, wkKey, dayIndex)
+    const ok = !locked && dnd.startDayDrag(personId, wkKey, dayIndex)
     if (!ok) {
       e.preventDefault()
       return
@@ -57,7 +61,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   }
 
   function handleDragOver(e) {
-    if (isRun) return
+    if (isRun || locked) return
     e.preventDefault()
     e.currentTarget.classList.add('drop-ready')
   }
@@ -65,7 +69,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
     e.currentTarget.classList.remove('drop-ready')
   }
   function handleDrop(e) {
-    if (isRun) return
+    if (isRun || locked) return
     e.preventDefault()
     e.currentTarget.classList.remove('drop-ready')
     dnd.dropDayAssignment(personId, wkKey, dayIndex)
@@ -73,6 +77,10 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
 
   function handleClick() {
     if (isHoliday) return
+    if (locked) {
+      toast(locked, 'error')
+      return
+    }
     // Opening the assignment editor on every click would fire on the first click of a
     // double-click too, immediately covering the cell and swallowing the second click before
     // the browser's dblclick ever reaches us. Delay it briefly so a following double-click can
@@ -84,14 +92,18 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   function handleDoubleClick(e) {
     e.stopPropagation()
     clearTimeout(clickTimerRef.current)
+    if (locked) {
+      toast(locked, 'error')
+      return
+    }
     onOpenNote(personId, wkKey, dayIndexes)
   }
 
   return (
     <td
-      className={'day-cell' + (isHoliday ? ' holiday' : !value ? ' empty' : '')}
+      className={'day-cell' + (isHoliday ? ' holiday' : !value ? ' empty' : '') + (locked ? ' locked' : '')}
       colSpan={dayIndexes.length}
-      draggable={!isRun && !!value && !isHoliday}
+      draggable={!isRun && !!value && !isHoliday && !locked}
       onDragStart={handleDragStart}
       onDragEnd={dnd.endDayDrag}
       onDragOver={handleDragOver}
@@ -100,14 +112,15 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       title={
-        isHoliday
+        (locked ? '🔒 ' + locked + '\n' : '') +
+        (isHoliday
           ? 'Holiday'
           : info
             ? info.name +
               (rangeLabel ? ' · ' + rangeLabel : '') +
               (tracker ? ' · ' + tracker.text : '') +
               (hasNote ? '\n' + notePreviewLines.map((n) => n.tag + n.text).join('\n') : ' · double-click to add a note')
-            : 'Click to assign'
+            : 'Click to assign')
       }
     >
       {isHoliday ? (
