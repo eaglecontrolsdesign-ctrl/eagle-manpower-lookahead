@@ -3,6 +3,7 @@ import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestor
 import { db } from '../../firebase.js'
 import { useAuth, userDocId } from '../../context/AuthContext.jsx'
 import { AUDIT_AREAS, auditSearchText, auditToCsv } from '../../engine/audit.js'
+import { nameFor, nameWithEmail } from '../../engine/userNames.js'
 
 const RANGES = [
   { key: 7, label: '7 days' },
@@ -22,6 +23,7 @@ export default function ActivityPage() {
   const { user } = useAuth()
   const me = userDocId(user && user.email)
   const [entries, setEntries] = useState(null)
+  const [userDocs, setUserDocs] = useState([])
   const [who, setWho] = useState('')
   const [area, setArea] = useState('')
   const [days, setDays] = useState(30)
@@ -36,7 +38,15 @@ export default function ActivityPage() {
     )
   }, [])
 
-  const users = useMemo(() => [...new Set((entries || []).map((e) => e.by))].sort(), [entries])
+  useEffect(() => {
+    return onSnapshot(
+      collection(db, 'users'),
+      (snap) => setUserDocs(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    )
+  }, [])
+
+  const users = useMemo(() => [...new Set((entries || []).map((e) => e.by))].sort((a, b) => nameFor(userDocs, a).localeCompare(nameFor(userDocs, b))), [entries, userDocs])
   const filtered = useMemo(() => {
     const since = days ? Date.now() - days * 86400000 : 0
     const needle = search.trim().toLowerCase()
@@ -86,7 +96,7 @@ export default function ActivityPage() {
           <option value="">Everyone</option>
           {users.map((u) => (
             <option key={u} value={u}>
-              {u === me ? u + ' (you)' : u}
+              {u === me ? nameFor(userDocs, u) + ' (you)' : nameWithEmail(userDocs, u)}
             </option>
           ))}
         </select>
@@ -104,7 +114,7 @@ export default function ActivityPage() {
               <div className="activity-when">{when(e.at)}</div>
               <div className="activity-body">
                 <div className="activity-head">
-                  <b>{e.by === me ? 'You' : e.by}</b>
+                  <b title={e.by}>{e.by === me ? 'You' : nameFor(userDocs, e.by)}</b>
                   <span className={'badge ' + (AREA_BADGE[e.area] || 'na')}>{AUDIT_AREAS[e.area] || e.area}</span>
                   <span>{e.action}</span>
                 </div>

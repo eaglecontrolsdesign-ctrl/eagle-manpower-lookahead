@@ -66,7 +66,7 @@ export default function RequestsPage() {
   }
 
   async function decline(r) {
-    const reason = window.prompt('Decline this request? Add a short reason for ' + r.fromEmail + ' (optional):', '')
+    const reason = window.prompt('Decline this request? Add a short reason for ' + rq.userName(r.fromEmail) + ' (optional):', '')
     if (reason === null) return
     try {
       await rq.resolve(r.id, 'declined', reason.trim() ? 'Declined — ' + reason.trim() : 'Declined.')
@@ -152,7 +152,7 @@ export default function RequestsPage() {
                     <span style={{ fontWeight: 500, color: 'var(--muted)' }}> · {labelDays(r.dayIndexes)} · week of {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                   </div>
                   <div className="card-subtitle">
-                    Needed on <b>{r.projectName}</b> · asked by {isMine ? 'you' : r.fromEmail} · {when(r.createdAt)} · to the {r.toBranch} coordinator
+                    Needed on <b>{r.projectName}</b> · asked by {isMine ? 'you' : rq.userName(r.fromEmail)} · {when(r.createdAt)} · to the {r.toBranch} coordinator
                   </div>
                 </div>
                 <span className={'badge ' + (STATUS_BADGE[r.status] || 'na')}>{REQUEST_STATUS[r.status] || r.status}</span>
@@ -173,7 +173,7 @@ export default function RequestsPage() {
                 <div className="request-thread">
                   {r.thread.map((t, i) => (
                     <div key={i} className="request-reply">
-                      <b>{t.by === rq.me ? 'You' : t.by}</b> <span style={{ color: 'var(--muted)' }}>{when(t.at)}</span>
+                      <b>{t.by === rq.me ? 'You' : rq.userName(t.by)}</b> <span style={{ color: 'var(--muted)' }}>{when(t.at)}</span>
                       <div>{t.text}</div>
                     </div>
                   ))}

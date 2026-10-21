@@ -5,6 +5,7 @@ import { useAuth, userDocId } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
 import { canResolve, needsMyAction, unseenResolved, coordinatorsFor, labelDays } from '../engine/requests.js'
 import { writeAudit } from './auditWrite.js'
+import { nameFor } from '../engine/userNames.js'
 
 const RequestsContext = createContext(null)
 
@@ -23,6 +24,8 @@ export function RequestsProvider({ children }) {
   const scopeRef = useRef(scope)
   scopeRef.current = scope
   const seenRef = useRef(null)
+  const usersRef = useRef([])
+  usersRef.current = users
 
   useEffect(() => {
     if (!user) {
@@ -44,7 +47,7 @@ export function RequestsProvider({ children }) {
             if (c.type !== 'added' || seenRef.current.has(c.doc.id)) return
             const r = c.doc.data()
             if (r.status === 'open' && r.fromEmail !== scopeRef.current.me && canResolve(r, scopeRef.current)) {
-              toast('New manpower request from ' + r.fromEmail + ': ' + r.personName + ' for ' + r.projectName, 'default', 6000)
+              toast('New manpower request from ' + nameFor(usersRef.current, r.fromEmail) + ': ' + r.personName + ' for ' + r.projectName, 'default', 6000)
             }
           })
         }
@@ -115,6 +118,7 @@ export function RequestsProvider({ children }) {
     badgeCount: actionable.length + unseen.length,
     canResolve: (r) => canResolve(r, scope),
     coordinatorsFor: (b) => coordinatorsFor(users, b),
+    userName: (email) => nameFor(users, email),
     createRequest,
     reply,
     resolve,

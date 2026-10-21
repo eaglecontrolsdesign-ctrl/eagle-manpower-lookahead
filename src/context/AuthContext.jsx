@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
   // All of the account's roles (engine/roles.js) — any mix of pm / coordinator / admin.
   const [roles, setRoles] = useState([])
   const [branch, setBranch] = useState('')
+  const [name, setName] = useState('')
   const [roleLoading, setRoleLoading] = useState(true)
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function AuthProvider({ children }) {
       setRole(null)
       setRoles([])
       setBranch('')
+      setName('')
       setRoleLoading(false)
       return
     }
@@ -55,6 +57,7 @@ export function AuthProvider({ children }) {
         setRoles(r)
         setRole(r.length ? primaryRole(r) : null)
         setBranch(data.branch || '')
+        setName((data.name || '').trim())
         setRoleLoading(false)
       },
       () => {
@@ -86,7 +89,7 @@ export function AuthProvider({ children }) {
   // Any role may edit; an account with none is view-only (engine/roles.js).
   const canEdit = roles.length > 0
 
-  return <AuthContext.Provider value={{ user, loading, role, roles, branch, roleLoading, isAdmin, isPm, isCoordinator, canEdit, signIn, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, name, role, roles, branch, roleLoading, isAdmin, isPm, isCoordinator, canEdit, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

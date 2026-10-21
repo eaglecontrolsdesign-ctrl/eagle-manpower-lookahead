@@ -8,6 +8,7 @@ import { projColor } from '../../engine/colors.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { OFFICES } from '../../engine/constants.js'
 import { userRoles, rolesLabel, rolesSortKey } from '../../engine/roles.js'
+import { displayName } from '../../engine/userNames.js'
 
 export default function ProjectsAdmin() {
   const { board, addProject, updateProject, removeProject } = useBoard()
@@ -68,7 +69,7 @@ export default function ProjectsAdmin() {
             <option value="">No PM assigned</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.id}
+                {displayName(u)}
                 {userRoles(u).length ? ' (' + rolesLabel(userRoles(u)) + ')' : ''}
               </option>
             ))}

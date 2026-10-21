@@ -64,6 +64,14 @@
   background: linear-gradient(90deg, var(--warn), var(--bad));
 }
 
+/* Administration > Users: inline display-name field */
+.user-name-input {
+  font-weight: 650;
+  font-size: 13px;
+  width: 200px;
+  max-width: 100%;
+}
+
 /* Administration > Roster: planning-role toggles laid out five per row so the group stays
    wide and short, leaving the name column room to breathe. */
 .pill-tabs.roster-roles {

@@ -7,6 +7,7 @@ import { dateOf } from '../../engine/dates.js'
 import { projColor } from '../../engine/colors.js'
 import { projectEditable } from '../../engine/permissions.js'
 import { DAY_LABELS, labelDays, branchOf, buildRequest } from '../../engine/requests.js'
+import { displayName } from '../../engine/userNames.js'
 
 const ALL_DAYS = [0, 1, 2, 3, 4]
 
@@ -63,7 +64,7 @@ export default function RequestModal({ personId, wkKey, dayIndexes, onClose }) {
     setSending(true)
     try {
       await rq.createRequest(buildRequest({ me: rq.me, person, wkKey, dayIndexes: selected, project, message, currentValues }))
-      toast('Request sent to the ' + branch + ' coordinator' + (coordinators.length === 1 ? ' (' + coordinators[0].id + ')' : ''))
+      toast('Request sent to the ' + branch + ' coordinator' + (coordinators.length === 1 ? ' (' + displayName(coordinators[0]) + ')' : ''))
       onClose()
     } catch (err) {
       toast('Could not send: ' + err.message, 'error')
@@ -129,7 +130,7 @@ export default function RequestModal({ personId, wkKey, dayIndexes, onClose }) {
         <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
           {coordinators.length ? (
             <>
-              Goes to the {branch} coordinator{coordinators.length > 1 ? 's' : ''}: <b>{coordinators.map((u) => u.id).join(', ')}</b>. Approving moves these days to the job you picked.
+              Goes to the {branch} coordinator{coordinators.length > 1 ? 's' : ''}: <b>{coordinators.map(displayName).join(', ')}</b>. Approving moves these days to the job you picked.
             </>
           ) : (
             <span style={{ color: 'var(--warn)' }}>No coordinator is assigned to {branch} yet — only administrators will see this request.</span>

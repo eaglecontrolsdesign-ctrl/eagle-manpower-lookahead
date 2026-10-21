@@ -22,7 +22,7 @@ const WORKSPACE_ITEMS = [
 ]
 
 export default function Sidebar() {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, name, signOut, isAdmin } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { board } = useBoard()
   const { badgeCount } = useRequests()
@@ -78,9 +78,11 @@ export default function Sidebar() {
 
       <div className="sidebar-account">
         <div className="avatar" style={{ background: '#5fa3e8' }}>
-          {(user?.email || '?')[0].toUpperCase()}
+          {(name || user?.email || '?')[0].toUpperCase()}
         </div>
-        <div className="sidebar-account-name">{user?.email}</div>
+        <div className="sidebar-account-name" title={user?.email}>
+          {name || user?.email}
+        </div>
         <button className="sidebar-signout" onClick={signOut} title="Sign out">
           Sign out
         </button>

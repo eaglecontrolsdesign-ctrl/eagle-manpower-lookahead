@@ -17,6 +17,7 @@ export default function UsersAdmin() {
   const toast = useToast()
   const [users, setUsers] = useState(null)
   const [email, setEmail] = useState('')
+  const [newName, setNewName] = useState('')
   const me = userDocId(user && user.email)
 
   useEffect(() => {
@@ -39,8 +40,9 @@ export default function UsersAdmin() {
     e.preventDefault()
     const id = userDocId(email)
     if (!id) return
-    save(id, { role: 'member', roles: [] }, 'Added ' + id)
+    save(id, { role: 'member', roles: [], name: newName.trim() }, 'Added ' + id)
     setEmail('')
+    setNewName('')
   }
 
   async function remove(u) {
@@ -77,6 +79,18 @@ export default function UsersAdmin() {
           const setRoles = (next) => save(u.id, { roles: next, role: primaryRole(next) }, u.id + ': ' + rolesLabel(next) + (next.includes('coordinator') && !u.branch ? ' — set their branch too' : ''))
           return (
             <div key={u.id} className="card-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', gap: 10 }}>
+              <input
+                key={u.id + '|' + (u.name || '')}
+                className="user-name-input"
+                placeholder="Name"
+                defaultValue={u.name || ''}
+                title="Display name — shown instead of the email on requests, the activity log and the sidebar"
+                onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v !== (u.name || '')) save(u.id, { name: v }, v ? u.id + ' is now shown as ' + v : 'Name cleared for ' + u.id)
+                }}
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 650, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {u.id}
@@ -128,7 +142,8 @@ export default function UsersAdmin() {
       )}
 
       <form onSubmit={add} style={{ display: 'flex', gap: 6, marginTop: 16 }}>
-        <input type="email" placeholder="Add by email before first sign-in…" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ flex: 1 }} />
+        <input type="email" placeholder="Add by email before first sign-in…" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ flex: 2 }} />
+        <input placeholder="Name (optional)" value={newName} onChange={(e) => setNewName(e.target.value)} style={{ flex: 1 }} />
         <button className="btn" type="submit">
           Add
         </button>
