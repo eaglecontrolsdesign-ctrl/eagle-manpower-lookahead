@@ -63,3 +63,20 @@
 .progress-bar.over > i {
   background: linear-gradient(90deg, var(--warn), var(--bad));
 }
+
+/* Administration > Roster: planning-role toggles laid out five per row so the group stays
+   wide and short, leaving the name column room to breathe. */
+.pill-tabs.roster-roles {
+  display: grid;
+  grid-template-columns: repeat(5, max-content);
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pill-tabs.roster-roles .pill-tab {
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .pill-tabs.roster-roles {
+    grid-template-columns: repeat(3, max-content);
+  }
+}

@@ -56,7 +56,7 @@ export default function RosterAdmin() {
               {o} <span style={{ color: 'var(--muted)' }}>· {ppl.length}</span>
             </div>
             {ppl.map((p) => (
-              <div key={p.id} className="card-row" style={{ padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+              <div key={p.id} className="card-row" style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
                 <span className="avatar" style={{ background: avColor(p.name), width: 24, height: 24, fontSize: 10 }}>
                   {initials(p.name)}
                 </span>
@@ -64,7 +64,7 @@ export default function RosterAdmin() {
                   <div style={{ fontWeight: 650, fontSize: 13 }}>{p.name}</div>
                   <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{p.role}</div>
                 </div>
-                <div className="pill-tabs" style={{ flexWrap: 'wrap', maxWidth: 440 }} title="Planning roles used to match PM demand — a person can hold several; the first is their primary">
+                <div className="pill-tabs roster-roles" title="Planning roles used to match PM demand — a person can hold several; the first is their primary">
                   {board.staffingRoles.map((r) => {
                     const roles = personPlanningRoles(p)
                     const on = roles.includes(r)
