@@ -1,23 +1,23 @@
-import { uid } from './ids.js'
-import { DEFAULT_STAFFING_ROLES, DEFAULT_OVERHEAD, SEED_PEOPLE, SEED_JOBS } from './constants.js'
+import seedBoard from './seedBoard.json'
 
-// Fresh board shape for a brand-new Firestore doc — no legacy migration chain needed
-// since this app has no prior data format to migrate from.
+// The board the app starts from on a genuine first-time setup ("Create new empty board"):
+// the real roster, projects, staffing roles, overhead categories and holidays, with no schedule.
+// seedBoard.json is a snapshot of the live board's structure — refresh it with
+// `node tools/refresh-seed.cjs` (instructions at the top of that file) whenever the roster
+// changes enough to matter. Ids are kept as they are live, so a JSON backup's days still line up with it.
 export function defaultBoard() {
-  const people = SEED_PEOPLE.map(([name, role]) => ({ id: uid('per_'), name, role, office: 'Charlotte', skills: [] })).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )
-  const projects = SEED_JOBS.map((name) => ({ id: uid('job_'), name, office: '', requiredSkills: [] }))
-
+  const copy = JSON.parse(JSON.stringify(seedBoard))
   return {
-    people,
-    projects,
-    overhead: DEFAULT_OVERHEAD.map((o) => ({ ...o })),
+    people: copy.people,
+    projects: copy.projects,
+    overhead: copy.overhead,
     days: {},
     notes: {},
     demands: {},
-    staffingRoles: DEFAULT_STAFFING_ROLES.slice(),
-    holidays: [],
+    staffingRoles: copy.staffingRoles,
+    holidays: copy.holidays || [],
     aiHistory: [],
   }
 }
+
+export const SEED_SNAPSHOT_DATE = seedBoard.snapshotAt

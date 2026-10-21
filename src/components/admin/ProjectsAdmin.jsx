@@ -25,11 +25,15 @@ export default function ProjectsAdmin() {
     })
   }, [])
 
+  // Jobs are either projects (the default) or service work (project.kind === 'service'); the
+  // list below keeps the two apart so service items don't get lost among the job numbers.
+  const [kind, setKind] = useState('project')
+
   function handleAdd(e) {
     e.preventDefault()
     if (!name.trim()) return
-    addProject({ id: uid('job_'), name: name.trim(), office: '', requiredSkills: [] })
-    toast(name.trim() + ' added')
+    addProject({ id: uid('job_'), name: name.trim(), office: '', requiredSkills: [], kind: kind === 'service' ? 'service' : '' })
+    toast(name.trim() + ' added' + (kind === 'service' ? ' under Service' : ''))
     setName('')
   }
 
@@ -39,19 +43,48 @@ export default function ProjectsAdmin() {
     updateProject(project.id, { requiredSkills: normalizeSkills(value) })
   }
 
+  // Keep each job's position in board.projects so its colour stays what it is on the board.
+  const indexed = board.projects.map((p, i) => ({ p, i }))
+  const sections = [
+    { key: 'project', title: 'Projects', empty: 'No projects yet', items: indexed.filter(({ p }) => p.kind !== 'service') },
+    { key: 'service', title: 'Service', empty: 'No service items yet — switch a job to Service, or add one below', items: indexed.filter(({ p }) => p.kind === 'service') },
+  ]
+
   return (
     <div>
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-        <input placeholder="Project / job name" value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1 }} />
+      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+        <input placeholder="Project / job name" value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1, minWidth: 220 }} />
+        <div className="pill-tabs" title="Add as a project or as service work">
+          <button type="button" className={'pill-tab' + (kind === 'project' ? ' on' : '')} onClick={() => setKind('project')}>
+            Project
+          </button>
+          <button type="button" className={'pill-tab' + (kind === 'service' ? ' on' : '')} onClick={() => setKind('service')}>
+            Service
+          </button>
+        </div>
         <button className="btn primary" type="submit">
           Add
         </button>
       </form>
 
-      {board.projects.map((p, i) => (
+      {sections.map((s) => (
+        <div key={s.key} style={{ marginBottom: 18 }}>
+          <div className="panel-title">
+            {s.title} <span style={{ color: 'var(--muted)' }}>· {s.items.length}</span>
+          </div>
+          {!s.items.length && <div style={{ color: 'var(--muted)', fontSize: 12.5 }}>{s.empty}</div>}
+          {s.items.map(({ p, i }) => (
         <div key={p.id} className="card-row" style={{ padding: '6px 0', borderBottom: '1px solid var(--border)', gap: 6 }}>
           <span className="avatar" style={{ background: projColor(p, i), width: 10, height: 10, borderRadius: 3 }} />
           <div style={{ flex: 1, marginLeft: 8, fontWeight: 650, fontSize: 13 }}>{p.name}</div>
+          <div className="pill-tabs" title="Project or service work">
+            <button className={'pill-tab' + (p.kind !== 'service' ? ' on' : '')} onClick={() => updateProject(p.id, { kind: '' })}>
+              Project
+            </button>
+            <button className={'pill-tab' + (p.kind === 'service' ? ' on' : '')} onClick={() => updateProject(p.id, { kind: 'service' })}>
+              Service
+            </button>
+          </div>
           <select value={p.office || ''} onChange={(e) => updateProject(p.id, { office: e.target.value })} title="Restrict to office (blank = shared)">
             <option value="">Shared / all offices</option>
             {OFFICES.map((o) => (
@@ -87,8 +120,9 @@ export default function ProjectsAdmin() {
             &#10005;
           </button>
         </div>
+          ))}
+        </div>
       ))}
-      {!board.projects.length && <div style={{ color: 'var(--muted)', fontSize: 12.5 }}>No projects yet</div>}
     </div>
   )
 }

@@ -1,0 +1,506 @@
+{
+  "snapshotAt": "2026-10-21",
+  "people": [
+    {
+      "id": "per_txikqg",
+      "name": "Adam Davis",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_ysmmgi",
+      "name": "AJ Portray",
+      "role": "Controls Technician",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Controls Technician",
+      "planningRoles": [
+        "Controls Technician",
+        "Service Technician",
+        "Panel Shop"
+      ]
+    },
+    {
+      "id": "per_l2jobj",
+      "name": "Akasia Bowie",
+      "role": "Operations Coordinator",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Project Coordinator",
+      "planningRoles": [
+        "Project Coordinator"
+      ]
+    },
+    {
+      "id": "per_vr1lcd",
+      "name": "Amber Kendall",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_wopauv",
+      "name": "Andre Rodriguez",
+      "role": "Sr. Project Manager",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Project Manager",
+      "planningRoles": [
+        "Project Manager",
+        "Controls Engineer",
+        "Programmer"
+      ]
+    },
+    {
+      "id": "per_odfrf2",
+      "name": "Andy Castleberry",
+      "role": "Project Manager",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Project Manager"
+    },
+    {
+      "id": "per_rxkopm",
+      "name": "Brad Frailey",
+      "role": "President",
+      "office": "St. Louis",
+      "skills": []
+    },
+    {
+      "id": "per_xu7psj",
+      "name": "David Illert",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_r02ln4",
+      "name": "Dru Teel",
+      "role": "Sr. Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_kli2pr",
+      "name": "Emily Johnson",
+      "role": "Project Coordinator",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Project Coordinator"
+    },
+    {
+      "id": "per_kmyrrl",
+      "name": "Ezra Pierce",
+      "role": "Controls Technician",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Controls Technician",
+      "planningRoles": [
+        "Controls Technician",
+        "Service Technician",
+        "Panel Shop"
+      ]
+    },
+    {
+      "id": "per_kils46",
+      "name": "Jalen Rhodes",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_wloqmt",
+      "name": "Jameson Perry",
+      "role": "Field Coordinator",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Project Coordinator"
+    },
+    {
+      "id": "per_wf5no3",
+      "name": "Jamie Camp",
+      "role": "Field Coordinator",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Project Coordinator",
+      "planningRoles": [
+        "Project Coordinator",
+        "Field Coordinator",
+        "Service Technician"
+      ]
+    },
+    {
+      "id": "per_c1ftv6",
+      "name": "Jason Baker",
+      "role": "Project Manager",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Project Manager"
+    },
+    {
+      "id": "per_a681uc",
+      "name": "Jason Muntz",
+      "role": "Sr. Project Manager",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Project Manager"
+    },
+    {
+      "id": "per_0327t2",
+      "name": "Jordan Summers",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_s8oycg",
+      "name": "Justin Collier",
+      "role": "Director of Operations",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Field Coordinator"
+    },
+    {
+      "id": "per_atlhlc",
+      "name": "Kendry Montero",
+      "role": "Field Coordinator",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Field Coordinator"
+    },
+    {
+      "id": "per_ze6ewa",
+      "name": "Kirk Hagewood",
+      "role": "Director of Technical Services",
+      "office": "Nashville",
+      "skills": []
+    },
+    {
+      "id": "per_003dpl",
+      "name": "Kyle Bliss",
+      "role": "Control Technician",
+      "office": "Nashville",
+      "skills": []
+    },
+    {
+      "id": "per_8nb752",
+      "name": "Kyle Pacatte",
+      "role": "Vice President • Leadership",
+      "office": "St. Louis",
+      "skills": []
+    },
+    {
+      "id": "per_60nucu",
+      "name": "Lyla Guthrie",
+      "role": "Project Technology and Development Coordinator",
+      "office": "Charlotte",
+      "skills": []
+    },
+    {
+      "id": "per_85y5uo",
+      "name": "Marc Rappa",
+      "role": "Project Manager",
+      "office": "Nashville",
+      "skills": [],
+      "planningRole": "Project Manager"
+    },
+    {
+      "id": "per_5n2ftm",
+      "name": "Michael McHugh",
+      "role": "Operations Manager",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Project Manager",
+      "planningRoles": [
+        "Project Manager",
+        "Project Director",
+        "Controls Engineer",
+        "Programmer"
+      ]
+    },
+    {
+      "id": "per_811xwu",
+      "name": "Michael Stahl",
+      "role": "Systems Design Engineer",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Engineer"
+    },
+    {
+      "id": "per_3ihbnq",
+      "name": "Mindy Herrera",
+      "role": "Project Coordinator",
+      "office": "Nashville",
+      "skills": [],
+      "planningRole": "Project Coordinator"
+    },
+    {
+      "id": "per_5h13sl",
+      "name": "Mitchell Weddle",
+      "role": "Sr. Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_qsfdac",
+      "name": "Nick Weiss",
+      "role": "Controls Technician",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_77yn4j",
+      "name": "Nick Zupinski",
+      "role": "Controls Technician",
+      "office": "Nashville",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_63tkdc",
+      "name": "Rich Porter",
+      "role": "Sr. Systems Support Specialist",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_znxmf3",
+      "name": "Robert Teel",
+      "role": "Sr. Controls Specialist",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_629viq",
+      "name": "Ryan Breen",
+      "role": "Controls Technician",
+      "office": "Charlotte",
+      "skills": [],
+      "planningRole": "Controls Engineer",
+      "planningRoles": [
+        "Controls Engineer",
+        "Panel Shop",
+        "Programmer",
+        "Service Technician"
+      ]
+    },
+    {
+      "id": "per_odrx1i",
+      "name": "Ryan Loveless",
+      "role": "Controls Technician",
+      "office": "Nashville",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_u2vwo7",
+      "name": "Sam Hancock",
+      "role": "Controls Technician",
+      "office": "Nashville",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_acy52w",
+      "name": "Tony Ball",
+      "role": "Systems Support Specialist",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Controls Technician"
+    },
+    {
+      "id": "per_u6k9h6",
+      "name": "Tucker Landewee",
+      "role": "Service Account Manager",
+      "office": "St. Louis",
+      "skills": [],
+      "planningRole": "Service Technician"
+    }
+  ],
+  "projects": [
+    {
+      "id": "job_4hul09",
+      "name": "C11170 AWS SBN 215",
+      "office": "St. Louis",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_ry1jyg",
+      "name": "C11396 Project Faraday",
+      "office": "Charlotte",
+      "requiredSkills": [],
+      "pmEmail": "arodriguez@eaglecontrols.design"
+    },
+    {
+      "id": "job_uji4uc",
+      "name": "C11314 AWS CLT-100",
+      "office": "Charlotte",
+      "requiredSkills": [],
+      "pmEmail": "acastleberry@eaglecontrols.design"
+    },
+    {
+      "id": "job_fkuovs",
+      "name": "C11516 AWS CLT-102",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_51ukyt",
+      "name": "C11834 MOC-1 DH2",
+      "office": "Charlotte",
+      "requiredSkills": [],
+      "pmEmail": "arodriguez@eaglecontrols.design"
+    },
+    {
+      "id": "job_sv3oww",
+      "name": "C11626 AWS CLT 100 Ancillary BLDGs",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_wq5nrh",
+      "name": "OJT/Safety Training",
+      "requiredSkills": [],
+      "pmEmail": "abowie@eaglecontrols.design"
+    },
+    {
+      "id": "job_w4oonh",
+      "name": "Service Call",
+      "office": "",
+      "requiredSkills": [],
+      "pmEmail": "lguthrie@eaglecontrols.design"
+    },
+    {
+      "id": "job_n9fqio",
+      "name": "MOC-1 DH3",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_df0z3l",
+      "name": "AWS CLT 106",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_bzkign",
+      "name": "Beale MCI CDU Rack",
+      "office": "Nashville",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_968v3d",
+      "name": "AWS CMH 224 & 225",
+      "office": "Nashville",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_rc871e",
+      "name": "AWS SBN 215 (Previously 210)",
+      "office": "St. Louis",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_2fnduw",
+      "name": "King Yuan (KYEC)",
+      "office": "St. Louis",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_k9r6ke",
+      "name": "AWS SBN 216",
+      "office": "St. Louis",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_xc9xvg",
+      "name": "C11674 AWS CLT-104",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_9j24ti",
+      "name": "C11742 AWS ATL 086 Data Center",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_dqfxmh",
+      "name": "C11970 MOC-1 DH1 Retrofit",
+      "office": "Charlotte",
+      "requiredSkills": []
+    },
+    {
+      "id": "job_s7zex8",
+      "name": "C11118 PRL1A LV Interlocking",
+      "office": "Charlotte",
+      "requiredSkills": []
+    }
+  ],
+  "staffingRoles": [
+    "Project Manager",
+    "Project Director",
+    "Controls Engineer",
+    "Controls Technician",
+    "Programmer",
+    "Startup / Commissioning",
+    "Field Coordinator",
+    "Project Coordinator",
+    "Service Technician",
+    "Panel Shop"
+  ],
+  "overhead": [
+    {
+      "color": "#fbbf24",
+      "id": "__PTO",
+      "name": "PTO / Vacation"
+    },
+    {
+      "color": "#38bdf8",
+      "id": "__SHOP",
+      "name": "Office"
+    },
+    {
+      "id": "__REMOTE",
+      "color": "#22d3ee",
+      "name": "Remote"
+    },
+    {
+      "id": "__SALES",
+      "name": "Sales",
+      "color": "#fb923c"
+    },
+    {
+      "name": "Holiday",
+      "color": "#cbd5e1",
+      "locked": true,
+      "id": "__HOL"
+    },
+    {
+      "id": "ov_d7q31y",
+      "name": "Offsite Training",
+      "color": "#34d399"
+    }
+  ],
+  "holidays": [
+    {
+      "label": "Christmas",
+      "key": "christmas"
+    },
+    {
+      "label": "Labor Day",
+      "key": "laborday"
+    }
+  ]
+}
