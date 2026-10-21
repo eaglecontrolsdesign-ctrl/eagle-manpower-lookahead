@@ -68,8 +68,10 @@ export function AuthProvider({ children }) {
   }
 
   const isAdmin = role === 'admin'
+  // Project managers only see the projects assigned to them (project.pmEmail) on PM Demand.
+  const isPm = role === 'pm'
 
-  return <AuthContext.Provider value={{ user, loading, role, branch, roleLoading, isAdmin, signIn, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, role, branch, roleLoading, isAdmin, isPm, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

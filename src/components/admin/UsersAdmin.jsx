@@ -53,8 +53,9 @@ export default function UsersAdmin() {
   return (
     <div>
       <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 0, marginBottom: 14 }}>
-        Everyone who has signed in appears here automatically. <b>Admin</b> unlocks this Administration page; everyone
-        else keeps full scheduling access. <b>Branch</b> is the office a user belongs to. Accounts themselves are still
+        Everyone who has signed in appears here automatically. <b>Admin</b> unlocks this Administration page. <b>PM</b>{' '}
+        sees only their own projects on PM Demand (assign projects to them under Projects). Everyone keeps full
+        scheduling access. <b>Branch</b> is the office a user belongs to. Accounts themselves are still
         created in Firebase Authentication — to add someone before their first sign-in, enter their email below.
       </p>
 
@@ -65,7 +66,7 @@ export default function UsersAdmin() {
       ) : (
         users.map((u) => {
           const self = u.id === me
-          const isAdm = u.role === 'admin'
+          const role = u.role === 'admin' || u.role === 'pm' ? u.role : 'member'
           return (
             <div key={u.id} className="card-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -93,11 +94,14 @@ export default function UsersAdmin() {
                   </option>
                 ))}
               </select>
-              <div className="pill-tabs" title={self ? "You can't change your own role" : 'Toggle admin access'}>
-                <button className={'pill-tab' + (!isAdm ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'member' }, 'Admin removed for ' + u.id)}>
+              <div className="pill-tabs" title={self ? "You can't change your own role" : 'Member · PM (own projects only on PM Demand) · Admin'}>
+                <button className={'pill-tab' + (role === 'member' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'member' }, u.id + ' is now a member')}>
                   Member
                 </button>
-                <button className={'pill-tab' + (isAdm ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'admin' }, u.id + ' is now an admin')}>
+                <button className={'pill-tab' + (role === 'pm' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'pm' }, u.id + ' is now a project manager')}>
+                  PM
+                </button>
+                <button className={'pill-tab' + (role === 'admin' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'admin' }, u.id + ' is now an admin')}>
                   Admin
                 </button>
               </div>

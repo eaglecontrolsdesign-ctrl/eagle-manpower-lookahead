@@ -1,3 +1,4 @@
+import { useAuth, userDocId } from '../../context/AuthContext.jsx'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
@@ -9,9 +10,14 @@ import ProjectsBoard from '../board/ProjectsBoard.jsx'
 
 export default function PmDemandPage() {
   const { board } = useBoard()
+  const { user, isPm } = useAuth()
   const ui = useUi()
   const weeks = useWeeks(ui.horizonWeeks)
-  const pd = projectDemandData(board, weeks, ui.officeFilter)
+  // A project manager sees only the projects assigned to them (Administration > Projects);
+  // admins and members see every project.
+  const me = userDocId(user && user.email)
+  const mine = isPm ? (p) => userDocId(p.pmEmail) === me : null
+  const pd = projectDemandData(board, weeks, ui.officeFilter).filter((x) => !mine || mine(x.p))
 
   const unplanned = pd.filter((x) => !x.plannedWeeks).length
   const draft = pd.filter((x) => x.draftWeeks > 0).length
@@ -39,6 +45,7 @@ export default function PmDemandPage() {
           <div className="page-title">PM Demand</div>
           <div className="page-subtitle">
             Role-based staffing plans by project and week · {ui.officeFilter || 'All offices'} · {weeks.length}-week horizon
+            {isPm && ' · Showing your projects'}
           </div>
         </div>
       </div>
@@ -76,7 +83,11 @@ export default function PmDemandPage() {
       <div className="panel-title" style={{ marginBottom: 8 }}>
         Click a week cell to build or edit that project's plan
       </div>
-      <ProjectsBoard weeks={weeks} />
+      <ProjectsBoard
+        weeks={weeks}
+        projectFilter={mine}
+        emptyMessage={isPm ? 'No projects are assigned to you yet. Ask an administrator to set you as the project manager under Administration › Projects.' : undefined}
+      />
     </div>
   )
 }

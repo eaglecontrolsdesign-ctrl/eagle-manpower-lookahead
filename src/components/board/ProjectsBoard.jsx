@@ -7,10 +7,14 @@ import { trackerDemand, rolesLine, TRACKER_DEMAND_LABEL } from '../../engine/tra
 
 const CLASS_COLOR = { unplanned: 'var(--muted)', draft: 'var(--warn)', short: 'var(--bad)', covered: 'var(--good)' }
 
-export default function ProjectsBoard({ weeks }) {
+// projectFilter (optional): extra predicate on top of the office filter — PM Demand uses it to
+// show a project manager only their own projects.
+export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
   const { board } = useBoard()
   const ui = useUi()
-  const projects = board.projects.filter((p) => !ui.officeFilter || !p.office || p.office === ui.officeFilter)
+  const projects = board.projects.filter(
+    (p) => (!ui.officeFilter || !p.office || p.office === ui.officeFilter) && (!projectFilter || projectFilter(p))
+  )
 
   return (
     <div className="board-wrap">
@@ -68,7 +72,7 @@ export default function ProjectsBoard({ weeks }) {
           {!projects.length && (
             <tr>
               <td colSpan={1 + weeks.length} className="empty-block">
-                No projects match the current filters.
+                {emptyMessage || 'No projects match the current filters.'}
               </td>
             </tr>
           )}
