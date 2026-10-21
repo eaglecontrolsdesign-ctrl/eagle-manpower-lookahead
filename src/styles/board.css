@@ -599,3 +599,14 @@ body.dnd-active .drag-trash {
 .skill-chip[draggable='true'] {
   -webkit-user-drag: element;
 }
+
+/* Section rows on the projects board (Projects / Service) */
+.board-table tr.board-section td {
+  background: var(--panel2);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 5px 8px;
+}

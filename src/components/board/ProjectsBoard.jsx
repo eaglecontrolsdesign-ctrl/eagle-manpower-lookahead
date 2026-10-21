@@ -12,9 +12,16 @@ const CLASS_COLOR = { unplanned: 'var(--muted)', draft: 'var(--warn)', short: 'v
 export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
   const { board } = useBoard()
   const ui = useUi()
-  const projects = board.projects.filter(
-    (p) => (!ui.officeFilter || !p.office || p.office === ui.officeFilter) && (!projectFilter || projectFilter(p))
-  )
+  const projects = board.projects
+    .map((p, i) => ({ p, i })) // i: position in board.projects, so colours match the people board
+    .filter(({ p }) => (!ui.officeFilter || !p.office || p.office === ui.officeFilter) && (!projectFilter || projectFilter(p)))
+  // Service work (project.kind === 'service', set on Administration > Projects) sits in its own
+  // section under the projects; the headers only appear once there is something to separate.
+  const groups = [
+    { key: 'project', title: 'Projects', items: projects.filter(({ p }) => p.kind !== 'service') },
+    { key: 'service', title: 'Service', items: projects.filter(({ p }) => p.kind === 'service') },
+  ].filter((g) => g.items.length)
+  const showHeaders = groups.length > 1
 
   return (
     <div className="board-wrap">
@@ -31,7 +38,15 @@ export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
           </tr>
         </thead>
         <tbody>
-          {projects.map((p, i) => (
+          {groups.map((g) => [
+            showHeaders && (
+              <tr key={'section-' + g.key} className="board-section">
+                <td colSpan={1 + weeks.length}>
+                  {g.title} · {g.items.length}
+                </td>
+              </tr>
+            ),
+            ...g.items.map(({ p, i }) => (
             <tr key={p.id}>
               <td className="person-cell">
                 <div className="person-cell-inner" style={{ cursor: 'pointer' }} onClick={() => ui.openDemand(p.id)} title="View PM demand">
@@ -68,7 +83,8 @@ export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
                 )
               })}
             </tr>
-          ))}
+            )),
+          ])}
           {!projects.length && (
             <tr>
               <td colSpan={1 + weeks.length} className="empty-block">
