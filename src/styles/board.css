@@ -556,3 +556,19 @@ body.dnd-active .drag-trash {
 .tracker-banner.edited {
   border-style: dashed;
 }
+
+/* Drag-and-drop surfaces are never text to select. Without this a quick drag (mouse moving
+   before the drag gesture registers) turns into a highlight sweep across the board instead
+   of moving the chip. */
+.board-table,
+.tray-job,
+.skill-chip,
+.drag-trash {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.day-cell[draggable='true'],
+.tray-job,
+.skill-chip[draggable='true'] {
+  -webkit-user-drag: element;
+}
