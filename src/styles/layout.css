@@ -226,3 +226,8 @@
     padding: 16px;
   }
 }
+
+/* The SOP link in the sidebar is an anchor styled like the nav buttons. */
+a.nav-pill {
+  text-decoration: none;
+}

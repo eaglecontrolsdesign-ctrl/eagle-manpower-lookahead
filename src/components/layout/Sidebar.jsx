@@ -61,6 +61,11 @@ export default function Sidebar() {
           </button>
         ))}
 
+        <a className="nav-pill" href="/docs/Eagle-Manpower-Lookahead-SOP.pdf" target="_blank" rel="noopener" title="Open the Standard Operating Procedure (PDF) in a new tab">
+          <span className="nav-icon">▣</span>
+          <span className="nav-label">SOP / Help</span>
+        </a>
+
         <button className="nav-pill" onClick={toggleTheme}>
           <span className="nav-icon">{theme === 'light' ? '☀' : '◑'}</span>
           <span className="nav-label">{theme === 'light' ? 'Light mode' : 'Dark mode'}</span>
