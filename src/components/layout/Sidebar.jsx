@@ -8,22 +8,24 @@ import { getAttentionAlerts } from '../../engine/alerts.js'
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '◈', label: 'Dashboard' },
   { key: 'board', icon: '☷', label: 'Manpower Board' },
+  { key: 'pmdemand', icon: '▦', label: 'PM Demand' },
+  { key: 'admin', icon: '⚙', label: 'Administration', adminOnly: true },
   { key: 'ops', icon: '◉', label: 'Ops Intelligence' },
 ]
 
 const WORKSPACE_ITEMS = [
   { key: 'alerts', icon: '⚠', label: 'Alerts' },
   { key: 'reports', icon: '▤', label: 'Reports' },
-  { key: 'admin', icon: '⚙', label: 'Administration' },
 ]
 
 export default function Sidebar() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { board } = useBoard()
   const ui = useUi()
   const weeks = useWeeks(ui.horizonWeeks)
   const alertCount = board ? getAttentionAlerts(board, weeks, board.people).length : 0
+  const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin)
 
   return (
     <aside className={'sidebar' + (ui.sidebarCollapsed ? ' collapsed' : '')}>
@@ -33,7 +35,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <button key={item.key} className={'nav-pill' + (ui.activeView === item.key ? ' active' : '')} onClick={() => ui.setActiveView(item.key)}>
             <span className="nav-icon">{item.icon}</span>
             <span className="nav-label">{item.label}</span>

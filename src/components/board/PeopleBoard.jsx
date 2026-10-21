@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
-import { personUtil } from '../../engine/utilization.js'
+import { personJobUtil, personOverheadUtil } from '../../engine/utilization.js'
 import { avColor, initials, utilColor, projColor } from '../../engine/colors.js'
 import { dayVal } from '../../engine/schedule.js'
 import { useBoardDnd } from './DndContext.jsx'
 import DayCell from './DayCell.jsx'
+import WeekDemandSummary from './WeekDemandSummary.jsx'
 import NoteModal from '../modals/NoteModal.jsx'
 import AssignmentModal from '../modals/AssignmentModal.jsx'
 
@@ -51,6 +52,7 @@ export default function PeopleBoard({ people, weeks }) {
             {weeks.map((w) => (
               <th key={w.key} colSpan={5}>
                 {w.label}
+                <WeekDemandSummary wkKey={w.key} />
               </th>
             ))}
           </tr>
@@ -66,8 +68,8 @@ export default function PeopleBoard({ people, weeks }) {
         </thead>
         <tbody>
           {people.map((person) => {
-            const util = personUtil(board, person, weeks)
-            const uc = utilColor(util)
+            const jobUtil = personJobUtil(board, person, weeks)
+            const overheadUtil = personOverheadUtil(board, person, weeks)
             const projectIds = new Set()
             weeks.forEach((w) => {
               for (let d = 0; d < 5; d++) {
@@ -99,9 +101,14 @@ export default function PeopleBoard({ people, weeks }) {
                       <div className="person-name">{person.name}</div>
                       <div className="person-role">{person.office || 'Charlotte'}</div>
                     </div>
-                    <span className="util-pill" style={{ background: uc }}>
-                      {util}%
-                    </span>
+                    <div className="util-pill-group">
+                      <span className="util-pill" style={{ background: utilColor(jobUtil) }} title={'Project / job utilization: ' + jobUtil + '%'}>
+                        {jobUtil}%
+                      </span>
+                      <span className="util-pill office" title={'Office / overhead utilization: ' + overheadUtil + '%'}>
+                        {overheadUtil}%
+                      </span>
+                    </div>
                   </div>
                   {legend.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
@@ -117,7 +124,8 @@ export default function PeopleBoard({ people, weeks }) {
                             cursor: 'grab',
                           }}
                           draggable
-                          title={'Drag to reassign all ' + l.name + ' work this horizon'}
+                          title={'Click for PM demand · drag to reassign all ' + l.name + ' work this horizon'}
+                          onClick={() => ui.openDemand(l.pid)}
                           onDragStart={(e) => {
                             dnd.startAssignmentDrag(person.id, l.pid)
                             e.dataTransfer.effectAllowed = 'move'
@@ -138,7 +146,7 @@ export default function PeopleBoard({ people, weeks }) {
                       personId={person.id}
                       wkKey={w.key}
                       dayIndexes={dayIndexes}
-                      onOpenNote={(pid, wk, di) => setNoteTarget({ pid, wk, di })}
+                      onOpenNote={(pid, wk, dis) => setNoteTarget({ pid, wk, dis })}
                       onOpenAssign={(pid, wk, dis) => setAssignTarget({ pid, wk, dis })}
                     />
                   ))
@@ -156,7 +164,7 @@ export default function PeopleBoard({ people, weeks }) {
         </tbody>
       </table>
 
-      {noteTarget && <NoteModal personId={noteTarget.pid} wkKey={noteTarget.wk} dayIndex={noteTarget.di} onClose={() => setNoteTarget(null)} />}
+      {noteTarget && <NoteModal personId={noteTarget.pid} wkKey={noteTarget.wk} dayIndexes={noteTarget.dis} onClose={() => setNoteTarget(null)} />}
       {assignTarget && <AssignmentModal personId={assignTarget.pid} wkKey={assignTarget.wk} dayIndexes={assignTarget.dis} onClose={() => setAssignTarget(null)} />}
     </div>
   )

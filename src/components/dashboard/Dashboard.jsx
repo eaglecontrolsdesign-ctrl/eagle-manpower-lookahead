@@ -42,9 +42,9 @@ export default function Dashboard() {
         <KpiCard label="Company utilization" value={util + '%'} onClick={() => ui.applyKpiFilter('')} />
         <KpiCard label="At capacity" value={over.length} sub="≥100% utilized" active={ui.utilizationFilter === 'over'} onClick={() => { ui.applyKpiFilter('over'); ui.setActiveView('board') }} />
         <KpiCard label="Under assigned" value={under.length} sub="<50% utilized" active={ui.utilizationFilter === 'under'} onClick={() => { ui.applyKpiFilter('under'); ui.setActiveView('board') }} />
-        <KpiCard label="Total PM demand" value={totalDemand + 'h'} onClick={() => ui.setActiveView('board')} />
+        <KpiCard label="Total PM demand" value={totalDemand + 'h'} onClick={() => ui.setActiveView('pmdemand')} />
         <KpiCard label="Open capacity" value={open + 'h'} active={ui.utilizationFilter === 'available'} onClick={() => { ui.applyKpiFilter('available'); ui.setActiveView('board') }} />
-        <KpiCard label="Unstaffed demand" value={gaps + 'h'} onClick={() => ui.setActiveView('board')} />
+        <KpiCard label="Unstaffed demand" value={gaps + 'h'} onClick={() => ui.setActiveView('pmdemand')} />
       </div>
 
       <div className="grid-cards" style={{ gridTemplateColumns: '220px 1fr' }}>

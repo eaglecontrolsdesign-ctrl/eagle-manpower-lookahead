@@ -9,6 +9,7 @@ import { normalizeSkills } from '../../engine/skills.js'
 import { projColor } from '../../engine/colors.js'
 import DemandRoleRow from './DemandRoleRow.jsx'
 import CoverageMeter from './CoverageMeter.jsx'
+import { trackerDemand, rolesLine, TRACKER_DEMAND_LABEL } from '../../engine/trackerNotes.js'
 
 export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   const { board, setDemand, updateProject } = useBoard()
@@ -25,6 +26,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   const project = board.projects.find((p) => p.id === projectId)
   const projectIndex = board.projects.findIndex((p) => p.id === projectId)
   const coverage = project ? projectWeekCoverage(board, projectId, activeWeek) : null
+  const trk = coverage ? trackerDemand(coverage.record) : null
 
   useEffect(() => {
     if (!coverage) return
@@ -103,6 +105,16 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
         </div>
 
         <CoverageMeter coverage={coverage} />
+
+        {trk && (
+          <div className={'tracker-banner ' + trk.state}>
+            <b>{TRACKER_DEMAND_LABEL[trk.state]}</b> — this week's demand came from the Project Command Center schedule
+            {coverage.record && coverage.record.roles ? ': ' + rolesLine(coverage.record) : ''}.{' '}
+            {trk.state === 'draft'
+              ? 'The tracker keeps it up to date while it stays as it is; edit or confirm it here and the tracker leaves this week to you.'
+              : 'You have ' + (trk.state === 'confirmed' ? 'confirmed' : 'edited') + ' it, so the tracker no longer changes this week.'}
+          </div>
+        )}
 
         <div style={{ marginBottom: 10 }}>
           {coverage.hasPlan ? (

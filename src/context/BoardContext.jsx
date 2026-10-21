@@ -14,9 +14,12 @@ export function BoardProvider({ children }) {
   const [board, setBoard] = useState(null)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState(null)
+  // True only when the boards/main document itself doesn't exist in Firestore — distinct from
+  // "ready" so the UI can show a loud warning instead of silently recreating a fresh demo board,
+  // which is what let a deleted document go unnoticed before.
+  const [missing, setMissing] = useState(false)
 
   const boardRef = useRef(null)
-  const seedingRef = useRef(false)
   // Local edits not yet guaranteed to be reflected by the next Firestore snapshot — covers both
   // "queued, not sent yet" and "sent, awaiting confirmation". Kept until the write is confirmed
   // so an incoming snapshot (which may still carry pre-write data) can never clobber a local
@@ -49,12 +52,11 @@ export function BoardProvider({ children }) {
       BOARD_REF,
       (snap) => {
         if (!snap.exists()) {
-          if (!seedingRef.current) {
-            seedingRef.current = true
-            setDoc(BOARD_REF, defaultBoard()).catch(setError)
-          }
+          setMissing(true)
+          setReady(true)
           return
         }
+        setMissing(false)
         const data = withUnconfirmed(snap.data())
         boardRef.current = data
         setBoard(data)
@@ -64,6 +66,12 @@ export function BoardProvider({ children }) {
     )
     return unsub
   }, [])
+
+  // The only path that may ever create the board document — requires an explicit, deliberate
+  // call (a button behind a confirm prompt), never triggered automatically on snapshot.
+  function initializeBoard() {
+    return setDoc(BOARD_REF, defaultBoard()).catch(setError)
+  }
 
   function flushNow() {
     if (timerRef.current) {
@@ -246,6 +254,8 @@ export function BoardProvider({ children }) {
     board,
     ready,
     error,
+    missing,
+    initializeBoard,
     setDay,
     setNote,
     setDemand,

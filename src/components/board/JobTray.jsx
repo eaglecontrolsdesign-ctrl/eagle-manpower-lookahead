@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useLocalStorageState } from '../../hooks/useLocalStorageState.js'
@@ -6,23 +6,65 @@ import { projColor } from '../../engine/colors.js'
 import { projectWeekCoverage, coverageLabel } from '../../engine/demand.js'
 import { useBoardDnd } from './DndContext.jsx'
 
+const PAD = 12
+const DEFAULT_STYLE = { top: 96, right: 24 }
+
+// Visibility is owned by the "Show/Hide job tray" button in BoardHeader (ui.jobTrayOpen) —
+// this component only mounts while that's true. It just owns its own on-screen position.
 export default function JobTray({ weekKey }) {
   const { board } = useBoard()
   const ui = useUi()
   const dnd = useBoardDnd()
-  const [collapsed, setCollapsed] = useLocalStorageState('eagle_mc_jobtray_collapsed', false)
+  const [pos, setPos] = useLocalStorageState('eagle_mc_jobtray_pos', null) // {x,y} top-left in px, or null = default corner
   const [q, setQ] = useState('')
+  const panelRef = useRef(null)
+  const dragRef = useRef(null)
 
-  if (collapsed) {
-    return (
-      <div className="tray-column collapsed">
-        <div className="tray-collapsed-strip" onClick={() => setCollapsed(false)} title="Open job tray">
-          <span>&#8249;</span>
-          <span className="tray-collapsed-label">Job tray</span>
-        </div>
-      </div>
-    )
+  function clamp(x, y, w, h) {
+    const maxX = Math.max(PAD, window.innerWidth - w - PAD)
+    const maxY = Math.max(PAD, window.innerHeight - h - PAD)
+    return { x: Math.min(Math.max(PAD, x), maxX), y: Math.min(Math.max(PAD, y), maxY) }
   }
+
+  function handlePointerMove(e) {
+    if (!dragRef.current) return
+    const el = panelRef.current
+    const w = el ? el.offsetWidth : 268
+    const h = el ? el.offsetHeight : 320
+    setPos(clamp(e.clientX - dragRef.current.dx, e.clientY - dragRef.current.dy, w, h))
+  }
+
+  function handlePointerUp() {
+    dragRef.current = null
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+  }
+
+  function handlePointerDown(e) {
+    if (e.button !== 0 || e.target.closest('button, input')) return
+    const el = panelRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    dragRef.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top }
+    // Seed an explicit position immediately so the panel doesn't jump if it was still at the default corner.
+    if (!pos) setPos(clamp(rect.left, rect.top, rect.width, rect.height))
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function resetPosition() {
+    setPos(null)
+  }
+
+  const style = pos ? { left: pos.x, top: pos.y } : DEFAULT_STYLE
 
   const jobs = board.projects
     .map((p, i) => ({ p, color: projColor(p, i) }))
@@ -62,11 +104,12 @@ export default function JobTray({ weekKey }) {
   }
 
   return (
-    <div className="tray-column">
-      <div className="tray-head">
+    <div className="tray-column job-tray-float" ref={panelRef} style={style}>
+      <div className="tray-head" onPointerDown={handlePointerDown} onDoubleClick={resetPosition} title="Drag to move · double-click to reset position">
+        <span className="tray-drag-handle">&#8942;&#8942;</span>
         <input className="pill-input" style={{ flex: 1 }} placeholder="Search jobs…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="icon-btn" onClick={() => setCollapsed(true)} title="Collapse job tray">
-          &#8250;
+        <button className="icon-btn" onClick={() => ui.setJobTrayOpen(false)} title="Close job tray">
+          &#10005;
         </button>
       </div>
       {jobs.length > 0 && (

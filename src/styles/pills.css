@@ -40,6 +40,11 @@
   color: #071018;
 }
 
+.pill-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .progress-bar {
   height: 8px;
   border-radius: 100px;

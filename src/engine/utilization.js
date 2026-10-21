@@ -26,6 +26,21 @@ export function personJobUtil(db, person, weeks) {
   return total ? Math.round((job / total) * 100) : 0
 }
 
+// % of weekdays assigned to an overhead category (PTO, Office, Remote, Sales, Holiday) —
+// the complement of personJobUtil, shown as its own board pill.
+export function personOverheadUtil(db, person, weeks) {
+  let overhead = 0
+  let total = 0
+  weeks.forEach((w) => {
+    for (let i = 0; i < 5; i++) {
+      total++
+      const v = dayVal(db.days, db.holidays, person.id, w.key, i)
+      if (v && v.indexOf('__') === 0) overhead++
+    }
+  })
+  return total ? Math.round((overhead / total) * 100) : 0
+}
+
 export function weekOpsStats(db, week, officeFilter) {
   const ppl = officeFilter ? db.people.filter((p) => (p.office || 'Charlotte') === officeFilter) : db.people
   const projects = db.projects.filter((p) => !officeFilter || !p.office || p.office === officeFilter)

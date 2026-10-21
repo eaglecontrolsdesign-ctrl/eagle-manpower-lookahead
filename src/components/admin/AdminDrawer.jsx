@@ -2,11 +2,13 @@ import { useState } from 'react'
 import RosterAdmin from './RosterAdmin.jsx'
 import ProjectsAdmin from './ProjectsAdmin.jsx'
 import OverheadAdmin from './OverheadAdmin.jsx'
+import UsersAdmin from './UsersAdmin.jsx'
 
 const TABS = [
   { key: 'roster', label: 'Roster', Component: RosterAdmin },
-  { key: 'projects', label: 'Jobs', Component: ProjectsAdmin },
+  { key: 'projects', label: 'Projects', Component: ProjectsAdmin },
   { key: 'overhead', label: 'Overhead', Component: OverheadAdmin },
+  { key: 'users', label: 'Users', Component: UsersAdmin },
 ]
 
 export default function AdminDrawer() {
@@ -18,7 +20,7 @@ export default function AdminDrawer() {
       <div className="page-header">
         <div>
           <div className="page-title">Administration</div>
-          <div className="page-subtitle">Roster, jobs, overhead, and staffing roles</div>
+          <div className="page-subtitle">Roster, projects, overhead, and staffing roles</div>
         </div>
       </div>
       <div className="pill-tabs" style={{ marginBottom: 16 }}>

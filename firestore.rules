@@ -1,9 +1,52 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /boards/{doc} {
-      allow read, write: if request.auth != null;
+    function signedIn() {
+      return request.auth != null;
     }
+    // users/{email} is keyed by the account's lowercased email.
+    function myId() {
+      return request.auth.token.email.lower();
+    }
+    // Role lives in Firestore (users/{email}), not a Firebase Auth custom claim — custom claims
+    // need the Admin SDK (a Cloud Function), which this app deliberately has none of. The first
+    // admin was seeded directly against the API, bypassing these rules, since nothing here can
+    // grant the very first admin (that would be a backdoor baked into the rules themselves).
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(myId())) &&
+        get(/databases/$(database)/documents/users/$(myId())).data.role == 'admin';
+    }
+
+    match /boards/{doc} {
+      // The whole app lives in this one shared document — it must never be deletable from a
+      // client, even an authenticated one. Deleting it is what silently wiped the real roster
+      // and had the app auto-recreate itself from demo seed data with no warning to anyone.
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow delete: if false;
+      // Administration (roster, projects, overhead, staffing roles, holidays) is admin-only —
+      // enforced here, not just hidden in the UI. Everything else (days/notes/demands/aiHistory —
+      // day-to-day scheduling) stays open to any signed-in user.
+      allow update: if signedIn() &&
+        (!request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['people', 'projects', 'overhead', 'staffingRoles', 'holidays'])
+         || isAdmin());
+    }
+
+    match /users/{email} {
+      allow read: if signedIn();
+      // Admins manage every record: role, branch, add, remove.
+      allow create, update, delete: if isAdmin();
+      // Every account registers its own record on first sign-in (so the Users page lists everyone
+      // who has ever logged in) and keeps its lastSeenAt current — but can never set its own
+      // role or branch. Those two fields are admin-only.
+      allow create: if signedIn() && email == myId() &&
+        !request.resource.data.keys().hasAny(['role', 'branch']);
+      allow update: if signedIn() && email == myId() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'branch']);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
