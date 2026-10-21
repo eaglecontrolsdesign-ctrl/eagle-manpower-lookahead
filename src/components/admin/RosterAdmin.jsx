@@ -3,7 +3,7 @@ import { useBoard } from '../../context/BoardContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { uid } from '../../engine/ids.js'
 import { avColor, initials } from '../../engine/colors.js'
-import { inferPlanningRole, personPlanningRole } from '../../engine/planningRoles.js'
+import { inferPlanningRole, personPlanningRoles } from '../../engine/planningRoles.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { OFFICES } from '../../engine/constants.js'
 import StaffingRolesAdmin from './StaffingRolesAdmin.jsx'
@@ -64,13 +64,25 @@ export default function RosterAdmin() {
                   <div style={{ fontWeight: 650, fontSize: 13 }}>{p.name}</div>
                   <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{p.role}</div>
                 </div>
-                <select value={personPlanningRole(p)} onChange={(e) => updatePerson(p.id, { planningRole: e.target.value })} title="Planning role used to match PM demand">
-                  {board.staffingRoles.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                <div className="pill-tabs" style={{ flexWrap: 'wrap', maxWidth: 440 }} title="Planning roles used to match PM demand — a person can hold several; the first is their primary">
+                  {board.staffingRoles.map((r) => {
+                    const roles = personPlanningRoles(p)
+                    const on = roles.includes(r)
+                    return (
+                      <button
+                        key={r}
+                        className={'pill-tab' + (on ? ' on' : '')}
+                        onClick={() => {
+                          const next = on ? roles.filter((x) => x !== r) : [...roles, r]
+                          if (!next.length) return
+                          updatePerson(p.id, { planningRoles: next, planningRole: next[0] })
+                        }}
+                      >
+                        {r}
+                      </button>
+                    )
+                  })}
+                </div>
                 <button className="icon-btn" onClick={() => editSkills(p)} title="Edit skills">
                   &#9881;
                 </button>

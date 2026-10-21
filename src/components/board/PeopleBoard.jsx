@@ -110,7 +110,7 @@ export default function PeopleBoard({ people, weeks }) {
                       <div className="person-name">{person.name}</div>
                       <div className="person-role">
                         {person.office || 'Charlotte'}
-                        {lock ? ' · read-only' : ''}
+                        {lock && !perms.viewer ? ' · read-only' : ''}
                       </div>
                     </div>
                     <div className="util-pill-group">
@@ -163,7 +163,7 @@ export default function PeopleBoard({ people, weeks }) {
                       onOpenAssign={(pid, wk, dis) => setAssignTarget({ pid, wk, dis })}
                       locked={lock}
                       requested={dayIndexes.map((di) => requestedByCell[person.id + '|' + w.key + '|' + di]).find(Boolean) || null}
-                      onRequest={perms.restricted ? (pid, wk, dis) => setRequestTarget({ pid, wk, dis }) : undefined}
+                      onRequest={perms.restricted && !perms.viewer ? (pid, wk, dis) => setRequestTarget({ pid, wk, dis }) : undefined}
                     />
                   ))
                 )}

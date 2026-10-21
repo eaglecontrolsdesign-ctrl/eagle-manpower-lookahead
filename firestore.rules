@@ -12,10 +12,23 @@ service cloud.firestore {
     // need the Admin SDK (a Cloud Function), which this app deliberately has none of. The first
     // admin was seeded directly against the API, bypassing these rules, since nothing here can
     // grant the very first admin (that would be a backdoor baked into the rules themselves).
+    // An account may hold several roles (users/{email}.roles); the older single `role` field
+    // still counts so nothing breaks for records written before roles became a list.
+    function hasRole(data, r) {
+      return data.role == r || ('roles' in data && r in data.roles);
+    }
     function isAdmin() {
       return signedIn() &&
         exists(/databases/$(database)/documents/users/$(myId())) &&
-        get(/databases/$(database)/documents/users/$(myId())).data.role == 'admin';
+        hasRole(get(/databases/$(database)/documents/users/$(myId())).data, 'admin');
+    }
+    // Any role (scheduler, pm, coordinator, admin) may edit; an account with none is view-only.
+    function canEdit() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(myId())) &&
+        (get(/databases/$(database)/documents/users/$(myId())).data.role in ['scheduler', 'pm', 'coordinator', 'admin'] ||
+          ('roles' in get(/databases/$(database)/documents/users/$(myId())).data &&
+            get(/databases/$(database)/documents/users/$(myId())).data.roles.size() > 0));
     }
 
     // Activity log (engine/audit.js): anyone signed in may read it and add entries as themselves;
@@ -47,7 +60,7 @@ service cloud.firestore {
       // day-to-day scheduling) stays open to any signed-in user.
       // Every change must come with its activity-log entry (boards/main.lastAuditId) — a board
       // write without one is refused, so nothing changes here without a record of who did it.
-      allow update: if signedIn() &&
+      allow update: if canEdit() &&
         auditedBy(request.resource.data.lastAuditId) &&
         (!request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['people', 'projects', 'overhead', 'staffingRoles', 'holidays'])
@@ -64,11 +77,11 @@ service cloud.firestore {
     function coordinatesBranch(branch) {
       return signedIn() &&
         exists(/databases/$(database)/documents/users/$(myId())) &&
-        myUser().role == 'coordinator' && myUser().branch == branch;
+        hasRole(myUser(), 'coordinator') && myUser().branch == branch;
     }
     match /requests/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() &&
+      allow create: if canEdit() &&
         request.resource.data.fromEmail == myId() &&
         request.resource.data.status == 'open';
       allow update: if signedIn() && resource.data.fromEmail == myId() &&
@@ -88,11 +101,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
       // Every account registers its own record on first sign-in (so the Users page lists everyone
       // who has ever logged in) and keeps its lastSeenAt current — but can never set its own
-      // role or branch. Those two fields are admin-only.
+      // role(s) or branch. Those fields are admin-only.
       allow create: if signedIn() && email == myId() &&
-        !request.resource.data.keys().hasAny(['role', 'branch']);
+        !request.resource.data.keys().hasAny(['role', 'roles', 'branch']);
       allow update: if signedIn() && email == myId() &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'branch']);
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'roles', 'branch']);
     }
 
     match /{document=**} {

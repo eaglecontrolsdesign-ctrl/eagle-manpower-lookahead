@@ -6,7 +6,7 @@ import { dayKeyOf, noteKeyOf } from '../engine/schedule.js'
 import { demandKey } from '../engine/demand.js'
 import { useAuth, userDocId } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
-import { isRestricted, mapKeyEditable } from '../engine/permissions.js'
+import { isLimited, isViewer, mapKeyEditable, VIEW_ONLY_REASON } from '../engine/permissions.js'
 import { buildAuditEntry, describeMapChanges, describeArrayChanges, areaForFields } from '../engine/audit.js'
 import { auditDoc, newAuditRef } from './auditWrite.js'
 
@@ -26,12 +26,12 @@ export function BoardProvider({ children }) {
 
   // Branch-restricted editing (engine/permissions.js): a user with a branch may only change
   // people and projects in that branch. Refused writes never reach local state or Firestore.
-  const { user, isAdmin, branch } = useAuth()
+  const { user, isAdmin, branch, canEdit } = useAuth()
   const toast = useToast()
-  const scope = { isAdmin, branch: branch || '', me: userDocId(user && user.email) }
+  const scope = { isAdmin, branch: branch || '', me: userDocId(user && user.email), viewer: !canEdit }
   function mayEdit(field, key) {
-    if (!isRestricted(scope) || mapKeyEditable(boardRef.current || { people: [], projects: [] }, field, key, scope)) return true
-    toast('Read-only: that belongs to another branch (you can edit ' + scope.branch + ')', 'error')
+    if (!isLimited(scope) || mapKeyEditable(boardRef.current || { people: [], projects: [] }, field, key, scope)) return true
+    toast(isViewer(scope) ? VIEW_ONLY_REASON : 'Read-only: that belongs to another branch (you can edit ' + scope.branch + ')', 'error')
     return false
   }
 
@@ -286,7 +286,7 @@ export function BoardProvider({ children }) {
     const prevSnapshot = boardRef.current
     // A branch user's bulk edits (drag-and-drop swaps, AI plans, imports) keep only the entries
     // inside their branch; anything else is left exactly as it was.
-    if (isRestricted(scope) && prevSnapshot) {
+    if (isLimited(scope) && prevSnapshot) {
       let blocked = 0
       partial = { ...partial }
       MAP_FIELDS.forEach((field) => {
@@ -301,7 +301,7 @@ export function BoardProvider({ children }) {
         })
         partial[field] = next
       })
-      if (blocked) toast(blocked + (blocked === 1 ? ' change' : ' changes') + ' outside your branch (' + scope.branch + ') skipped', 'error')
+      if (blocked) toast(isViewer(scope) ? VIEW_ONLY_REASON : blocked + (blocked === 1 ? ' change' : ' changes') + ' outside your branch (' + scope.branch + ') skipped', 'error')
     }
     optimisticUpdate((prev) => ({ ...prev, ...partial }))
     Object.entries(partial).forEach(([field, nextValue]) => {

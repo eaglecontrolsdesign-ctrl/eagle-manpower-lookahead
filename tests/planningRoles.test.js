@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { inferPlanningRole, personPlanningRole } from '../src/engine/planningRoles.js'
+import { inferPlanningRole, personPlanningRole, personPlanningRoles } from '../src/engine/planningRoles.js'
 
 describe('planningRoles', () => {
   it('infers a staffing role from keywords in a free-text job title', () => {
@@ -14,5 +14,12 @@ describe('planningRoles', () => {
   it('personPlanningRole prefers an explicit override over inference', () => {
     expect(personPlanningRole({ role: 'Engineer', planningRole: 'Programmer' })).toBe('Programmer')
     expect(personPlanningRole({ role: 'Engineer' })).toBe('Controls Engineer')
+  })
+
+  it('a person can hold several planning roles; the first is primary', () => {
+    const p = { role: 'Engineer', planningRole: 'Programmer', planningRoles: ['Controls Engineer', 'Programmer'] }
+    expect(personPlanningRoles(p)).toEqual(['Controls Engineer', 'Programmer'])
+    expect(personPlanningRole(p)).toBe('Controls Engineer')
+    expect(personPlanningRoles({ role: 'Engineer', planningRoles: [] })).toEqual(['Controls Engineer'])
   })
 })

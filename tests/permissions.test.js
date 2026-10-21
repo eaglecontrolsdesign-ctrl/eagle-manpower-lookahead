@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isRestricted, personEditable, projectEditable, mapKeyEditable, partitionMapPatch, readOnlyReason } from '../src/engine/permissions.js'
+import { isRestricted, isViewer, isLimited, personEditable, projectEditable, mapKeyEditable, partitionMapPatch, readOnlyReason, VIEW_ONLY_REASON } from '../src/engine/permissions.js'
 import { dayKeyOf } from '../src/engine/schedule.js'
 import { demandKey } from '../src/engine/demand.js'
 import { makeDb } from './helpers.js'
@@ -49,6 +49,18 @@ describe('permissions', () => {
     const { allowed, blocked } = partitionMapPatch(db, 'days', entries, nashUser)
     expect(Object.keys(allowed)).toEqual([dayKeyOf('p2', 'w', 0), dayKeyOf('p2', 'w', 1)])
     expect(blocked).toBe(1)
+  })
+
+  it('a viewer (no role) can edit nothing, whatever their branch', () => {
+    const viewer = { isAdmin: false, branch: '', me: 'v@x', viewer: true }
+    expect(isViewer(viewer)).toBe(true)
+    expect(isLimited(viewer)).toBe(true)
+    expect(isRestricted(viewer)).toBe(false)
+    expect(personEditable(nash, viewer)).toBe(false)
+    expect(projectEditable({ id: 'j', office: '' }, viewer)).toBe(false)
+    expect(mapKeyEditable(makeDb({ people: [nash] }), 'days', dayKeyOf('p2', 'w', 0), viewer)).toBe(false)
+    expect(readOnlyReason(nash, viewer)).toBe(VIEW_ONLY_REASON)
+    expect(isLimited({ isAdmin: false, branch: '', viewer: false })).toBe(false)
   })
 
   it('readOnlyReason names the person and both branches', () => {

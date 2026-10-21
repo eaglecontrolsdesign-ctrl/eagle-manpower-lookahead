@@ -39,10 +39,16 @@ export default function BoardPage() {
             <div className="page-title">Manpower Board</div>
             <div className="page-subtitle">
               {weeks[0]?.label} – {weeks[weeks.length - 1]?.label}
-              {perms.restricted && (
-                <span className="scope-badge" title="Your account is assigned to this branch; other branches are read-only for you">
-                  Editing {perms.branch} only
+              {perms.viewer ? (
+                <span className="scope-badge" title="Your account has no editing role; ask an administrator for the Scheduler role to make changes">
+                  View only
                 </span>
+              ) : (
+                perms.restricted && (
+                  <span className="scope-badge" title="Your account is assigned to this branch; other branches are read-only for you">
+                    Editing {perms.branch} only
+                  </span>
+                )
               )}
             </div>
           </div>

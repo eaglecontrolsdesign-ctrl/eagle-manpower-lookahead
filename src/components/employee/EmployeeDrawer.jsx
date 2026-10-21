@@ -6,7 +6,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { avColor, initials, utilColor } from '../../engine/colors.js'
 import { personUtil } from '../../engine/utilization.js'
-import { personPlanningRole } from '../../engine/planningRoles.js'
+import { personPlanningRoles } from '../../engine/planningRoles.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { dayVal } from '../../engine/schedule.js'
 import UtilizationSparkline from './UtilizationSparkline.jsx'
@@ -68,7 +68,7 @@ export default function EmployeeDrawer({ personId, onClose }) {
               {person.name}
             </div>
             <div className="card-subtitle">
-              {person.role || 'Team member'} · <b style={{ color: 'var(--accent)' }}>{personPlanningRole(person)}</b> · {person.office || 'Charlotte'}
+              {person.role || 'Team member'} · <b style={{ color: 'var(--accent)' }}>{personPlanningRoles(person).join(' / ')}</b> · {person.office || 'Charlotte'}
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>

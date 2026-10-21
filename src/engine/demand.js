@@ -1,5 +1,5 @@
 import { dayVal } from './schedule.js'
-import { personPlanningRole } from './planningRoles.js'
+import { personPlanningRoles } from './planningRoles.js'
 import { projColor } from './colors.js'
 
 export function demandKey(projectId, wkKey) {
@@ -18,6 +18,18 @@ export function demandHours(record) {
 // Assigned hours + demand coverage for one project in one week, broken out per staffing role.
 export function projectWeekCoverage(db, projectId, wkKey) {
   const record = demandRecord(db, projectId, wkKey)
+  // What the PM asked for, per role — needed first so a person who holds several planning
+  // roles can be counted toward whichever of them this week still needs.
+  const roleNeeds = {}
+  if (record) {
+    record.roles.forEach((r) => {
+      if (!roleNeeds[r.role]) roleNeeds[r.role] = { role: r.role, needed: 0, heads: 0, hours: +r.hours || 0 }
+      roleNeeds[r.role].needed += (+r.heads || 0) * (+r.hours || 0)
+      roleNeeds[r.role].heads += +r.heads || 0
+    })
+  }
+  const remaining = {}
+  Object.values(roleNeeds).forEach((r) => (remaining[r.role] = r.needed))
   const roleAssigned = {}
   const assignedPeople = new Set()
   let assigned = 0
@@ -27,8 +39,11 @@ export function projectWeekCoverage(db, projectId, wkKey) {
     if (hours) {
       assigned += hours
       assignedPeople.add(per.id)
-      const role = personPlanningRole(per)
+      const roles = personPlanningRoles(per)
+      // Prefer a role of theirs that is still short, then any role the plan asks for, then their primary.
+      const role = roles.find((r) => remaining[r] > 0) || roles.find((r) => roleNeeds[r]) || roles[0]
       roleAssigned[role] = (roleAssigned[role] || 0) + hours
+      if (remaining[role] != null) remaining[role] = Math.max(0, remaining[role] - hours)
     }
   })
   if (!record) {
@@ -46,12 +61,6 @@ export function projectWeekCoverage(db, projectId, wkKey) {
     }
   }
   const demand = demandHours(record)
-  const roleNeeds = {}
-  record.roles.forEach((r) => {
-    if (!roleNeeds[r.role]) roleNeeds[r.role] = { role: r.role, needed: 0, heads: 0, hours: +r.hours || 0 }
-    roleNeeds[r.role].needed += (+r.heads || 0) * (+r.hours || 0)
-    roleNeeds[r.role].heads += +r.heads || 0
-  })
   const roleGaps = Object.values(roleNeeds).map((r) => {
     const covered = roleAssigned[r.role] || 0
     return { ...r, covered, gap: Math.max(0, r.needed - covered) }

@@ -10,13 +10,13 @@ import ProjectsBoard from '../board/ProjectsBoard.jsx'
 
 export default function PmDemandPage() {
   const { board } = useBoard()
-  const { user, isPm } = useAuth()
+  const { user, isPm, isAdmin } = useAuth()
   const ui = useUi()
   const weeks = useWeeks(ui.horizonWeeks)
   // A project manager sees only the projects assigned to them (Administration > Projects);
   // admins and members see every project.
   const me = userDocId(user && user.email)
-  const mine = isPm ? (p) => userDocId(p.pmEmail) === me : null
+  const mine = isPm && !isAdmin ? (p) => userDocId(p.pmEmail) === me : null
   const pd = projectDemandData(board, weeks, ui.officeFilter).filter((x) => !mine || mine(x.p))
 
   const unplanned = pd.filter((x) => !x.plannedWeeks).length
@@ -45,7 +45,7 @@ export default function PmDemandPage() {
           <div className="page-title">PM Demand</div>
           <div className="page-subtitle">
             Role-based staffing plans by project and week · {ui.officeFilter || 'All offices'} · {weeks.length}-week horizon
-            {isPm && ' · Showing your projects'}
+            {isPm && !isAdmin && ' · Showing your projects'}
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function PmDemandPage() {
       <ProjectsBoard
         weeks={weeks}
         projectFilter={mine}
-        emptyMessage={isPm ? 'No projects are assigned to you yet. Ask an administrator to set you as the project manager under Administration › Projects.' : undefined}
+        emptyMessage={isPm && !isAdmin ? 'No projects are assigned to you yet. Ask an administrator to set you as the project manager under Administration › Projects.' : undefined}
       />
     </div>
   )

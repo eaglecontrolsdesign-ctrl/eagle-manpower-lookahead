@@ -29,6 +29,36 @@ describe('demand', () => {
     expect(coverageClass(c)).toBe('short')
   })
 
+  it('a person with several planning roles counts toward whichever the plan still needs', () => {
+    const db = makeDb({
+      people: [
+        { id: 'p1', planningRoles: ['Controls Technician', 'Programmer'] },
+        { id: 'p2', planningRoles: ['Controls Technician', 'Programmer'] },
+      ],
+      projects: [{ id: 'job_1' }],
+      days: {
+        [dayKeyOf('p1', '2026-01-05', 0)]: 'job_1', // 8h
+        [dayKeyOf('p2', '2026-01-05', 0)]: 'job_1', // 8h
+      },
+      demands: {
+        'job_1|2026-01-05': {
+          status: 'confirmed',
+          roles: [
+            { role: 'Controls Technician', heads: 1, hours: 8 },
+            { role: 'Programmer', heads: 1, hours: 8 },
+          ],
+        },
+      },
+    })
+    const c = projectWeekCoverage(db, 'job_1', '2026-01-05')
+    // p1 fills the technician need, p2 is then counted as the programmer — no gap either way.
+    expect(c.gap).toBe(0)
+    expect(c.roleGaps.map((g) => g.role + ':' + g.covered)).toEqual(['Controls Technician:8', 'Programmer:8'])
+    // With only one person, the second role stays short.
+    delete db.days[dayKeyOf('p2', '2026-01-05', 0)]
+    expect(projectWeekCoverage(db, 'job_1', '2026-01-05').gap).toBe(8)
+  })
+
   it('a shortfall in one role counts even if another role is overstaffed', () => {
     const db = makeDb({
       people: [

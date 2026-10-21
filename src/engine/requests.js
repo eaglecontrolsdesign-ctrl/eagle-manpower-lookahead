@@ -7,6 +7,7 @@
 // create, reply to, and resolve it.
 
 import { DEFAULT_OFFICE } from './permissions.js'
+import { hasRole } from './roles.js'
 
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 export const REQUEST_STATUS = { open: 'Open', approved: 'Approved', declined: 'Declined', cancelled: 'Cancelled' }
@@ -24,14 +25,14 @@ export function branchOf(person) {
 }
 
 export function coordinatorsFor(users, branch) {
-  return (users || []).filter((u) => u.role === 'coordinator' && u.branch === branch)
+  return (users || []).filter((u) => hasRole(u, 'coordinator') && u.branch === branch)
 }
 
-// Who may approve or decline: the branch's coordinator, or an admin. scope = { isAdmin, role, branch }.
+// Who may approve or decline: the branch's coordinator, or an admin. scope = { isAdmin, roles, branch }.
 export function canResolve(req, scope) {
   if (!req || !scope) return false
   if (scope.isAdmin) return true
-  return scope.role === 'coordinator' && !!scope.branch && scope.branch === req.toBranch
+  return hasRole(scope, 'coordinator') && !!scope.branch && scope.branch === req.toBranch
 }
 
 export function requestCellKeys(req) {

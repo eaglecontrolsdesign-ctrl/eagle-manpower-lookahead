@@ -5,6 +5,7 @@ import { useAuth, userDocId } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { OFFICES } from '../../engine/constants.js'
 import { writeAudit } from '../../context/auditWrite.js'
+import { userRoles, toggleRole, primaryRole, rolesLabel } from '../../engine/roles.js'
 
 function lastSeen(ts) {
   if (!ts) return 'Never signed in'
@@ -27,7 +28,7 @@ export default function UsersAdmin() {
   async function save(id, patch, message) {
     try {
       await setDoc(doc(db, 'users', id), { email: id, ...patch, updatedAt: Date.now() }, { merge: true })
-      writeAudit(me, 'users', message, Object.entries(patch).map(([k, v]) => id + ' — ' + k + ': ' + (v || '(none)')))
+      writeAudit(me, 'users', message, Object.entries(patch).map(([k, v]) => id + ' — ' + k + ': ' + (Array.isArray(v) ? v.join(', ') || '(none)' : v || '(none)')))
       toast(message)
     } catch (err) {
       toast('Could not save: ' + err.message, 'error')
@@ -38,7 +39,7 @@ export default function UsersAdmin() {
     e.preventDefault()
     const id = userDocId(email)
     if (!id) return
-    save(id, { role: 'member' }, 'Added ' + id)
+    save(id, { role: 'member', roles: [] }, 'Added ' + id)
     setEmail('')
   }
 
@@ -56,9 +57,11 @@ export default function UsersAdmin() {
   return (
     <div>
       <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 0, marginBottom: 14 }}>
-        Everyone who has signed in appears here automatically. <b>Admin</b> unlocks this Administration page. <b>PM</b>{' '}
+        Everyone who has signed in appears here automatically. A <b>Member</b> (no role) can only view — right for techs
+        checking their schedule. <b>Scheduler</b> can edit the board and PM demand. Roles combine — a user can be a
+        Scheduler and a Coordinator, or everything at once. <b>Admin</b> unlocks this Administration page. <b>PM</b>{' '}
         sees only their own projects on PM Demand (assign projects to them under Projects). <b>Coordinator</b> answers
-        manpower requests for their branch (set a branch for them). Everyone keeps full scheduling access. <b>Branch</b> limits editing: a user with a branch can only change that branch's people and
+        manpower requests for their branch (set a branch for them). Every role can edit the schedule. <b>Branch</b> limits editing: a user with a branch can only change that branch's people and
         projects (other branches are read-only for them); <i>All branches</i> is unrestricted. Accounts themselves are still
         created in Firebase Authentication — to add someone before their first sign-in, enter their email below.
       </p>
@@ -70,7 +73,8 @@ export default function UsersAdmin() {
       ) : (
         users.map((u) => {
           const self = u.id === me
-          const role = ['admin', 'pm', 'coordinator'].includes(u.role) ? u.role : 'member'
+          const roles = userRoles(u)
+          const setRoles = (next) => save(u.id, { roles: next, role: primaryRole(next) }, u.id + ': ' + rolesLabel(next) + (next.includes('coordinator') && !u.branch ? ' — set their branch too' : ''))
           return (
             <div key={u.id} className="card-row" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -98,21 +102,20 @@ export default function UsersAdmin() {
                   </option>
                 ))}
               </select>
-              <div className="pill-tabs" title={self ? "You can't change your own role" : 'Member · PM (own projects only on PM Demand) · Coordinator (answers manpower requests for their branch) · Admin'}>
-                <button className={'pill-tab' + (role === 'member' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'member' }, u.id + ' is now a member')}>
+              <div className="pill-tabs" title={self ? "You can't change your own roles" : 'Toggle roles: Scheduler (edits the board) · PM (own projects only on PM Demand) · Coordinator (answers manpower requests for their branch) · Admin. None = Member, view only.'}>
+                <button className={'pill-tab' + (!roles.length ? ' on' : '')} disabled={self} onClick={() => setRoles([])}>
                   Member
                 </button>
-                <button className={'pill-tab' + (role === 'pm' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'pm' }, u.id + ' is now a project manager')}>
+                <button className={'pill-tab' + (roles.includes('scheduler') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'scheduler'))}>
+                  Scheduler
+                </button>
+                <button className={'pill-tab' + (roles.includes('pm') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'pm'))}>
                   PM
                 </button>
-                <button
-                  className={'pill-tab' + (role === 'coordinator' ? ' on' : '')}
-                  disabled={self}
-                  onClick={() => save(u.id, { role: 'coordinator' }, u.id + ' is now a coordinator' + (u.branch ? ' for ' + u.branch : ' — set their branch too'))}
-                >
+                <button className={'pill-tab' + (roles.includes('coordinator') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'coordinator'))}>
                   Coordinator
                 </button>
-                <button className={'pill-tab' + (role === 'admin' ? ' on' : '')} disabled={self} onClick={() => save(u.id, { role: 'admin' }, u.id + ' is now an admin')}>
+                <button className={'pill-tab' + (roles.includes('admin') ? ' on' : '')} disabled={self} onClick={() => setRoles(toggleRole(roles, 'admin'))}>
                   Admin
                 </button>
               </div>

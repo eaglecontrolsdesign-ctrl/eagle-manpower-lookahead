@@ -12,8 +12,8 @@ from reportlab.pdfgen import canvas as canvas_mod
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(HERE, "letterhead-logo.png")
 OUT_PATH = os.path.normpath(os.path.join(HERE, "..", "..", "public", "docs", "Eagle-Manpower-Lookahead-SOP.pdf"))
-REV = "Rev 3.0"
-REV_NOTE = "roles &amp; branches, manpower requests, activity log, Project Command Center (PCC) integration"
+REV = "Rev 3.1"
+REV_NOTE = "roles (incl. view-only Member and Scheduler) &amp; branches, manpower requests, activity log, Project Command Center (PCC) integration"
 
 LEFT_MARGIN = 0.75 * inch
 RIGHT_MARGIN = 0.75 * inch
@@ -131,21 +131,25 @@ story.append(rule())
 # ---- 3. Roles & Responsibilities ----
 story.append(section(3, "Roles &amp; Responsibilities"))
 story.append(P(
-    "Every account has one role, set by an administrator under Administration &gt; Users, and optionally a "
-    "branch. Together these decide what a user sees and what they may change.",
+    "Every account carries a set of roles (any combination), set by an administrator under Administration &gt; Users, "
+    "and optionally a branch. Together these decide what a user sees and what they may change. An account with no "
+    "role at all is a view-only Member.",
     "body",
 ))
 story.append(table(
     ["Role", "What they do", "What the system allows"],
     [
-        ["Member (default)",
+        ["Member (no role)",
+         "Views the board, PM demand, requests and activity \u2013 the right setting for technicians checking their own schedule.",
+         "Read-only everywhere. Cannot assign, note, plan demand or send requests; the board header shows View only."],
+        ["Scheduler",
          "Day-to-day scheduling on the Manpower Board; dispatch notes; PM demand for shared projects and projects in their branch.",
          "Edits people and projects in their own branch. With no branch set (\u201cAll branches\u201d) they may edit every branch."],
         ["Project Manager (PM)",
          "Enters and maintains PM demand plans for the projects assigned to them; confirms or edits PCC demand drafts.",
-         "PM Demand shows only their assigned projects. Scheduling rights are the same as a Member."],
+         "PM Demand shows only their assigned projects. Scheduling rights are the same as a Scheduler."],
         ["Branch Coordinator",
-         "Everything a Member does, plus answers manpower requests from other branches for people in their branch.",
+         "Everything a Scheduler does, plus answers manpower requests from other branches for people in their branch.",
          "Must have a branch set. Approve / Decline on the Requests page for that branch."],
         ["Administrator",
          "Owns the roster, projects, overhead, staffing roles, users, roles and branches, project-to-PM assignment, backups and restores.",
@@ -188,7 +192,7 @@ story.extend(block(
     [
         ("Under Administration &gt; Users:", [
             "Everyone who has signed in appears automatically; to set someone up before their first sign-in, enter their email in Add by email",
-            "Set the role with the Member / PM / Coordinator / Admin pill (you cannot change your own role)",
+            "Toggle roles with the Scheduler / PM / Coordinator / Admin pills – they combine; Member (none on) is view-only, which is what technicians should have (you cannot change your own roles)",
             "Set the Branch from the dropdown; All branches means unrestricted editing",
             "A Coordinator must have a branch, or requests for that branch will only reach administrators",
         ]),
@@ -410,11 +414,12 @@ story.append(section(7, "Quick Reference"))
 story.append(table(
     ["I want to\u2026", "Where", "Who"],
     [
-        ["Assign or clear a day", "Manpower Board -> click a day cell", "Any user, within their branch"],
-        ["Add a dispatch note", "Manpower Board -> double-click a day or block", "Any user, within their branch"],
-        ["Borrow someone from another branch", "Manpower Board -> click their day -> Send request", "Any user with a branch"],
+        ["Assign or clear a day", "Manpower Board -> click a day cell", "Any editing role, within their branch"],
+        ["Add a dispatch note", "Manpower Board -> double-click a day or block", "Any editing role, within their branch"],
+        ["Borrow someone from another branch", "Manpower Board -> click their day -> Send request", "Any editing role with a branch"],
+        ["Check my own schedule (read-only)", "Manpower Board / Dashboard", "Member (no role), e.g. technicians"],
         ["Answer a request", "Requests -> Needs my action", "Branch Coordinator / Administrator"],
-        ["Plan PM demand", "PM Demand, or click a project on the board", "PMs (own projects), Members, Admins"],
+        ["Plan PM demand", "PM Demand, or click a project on the board", "PMs (own projects), Schedulers, Coordinators, Admins"],
         ["Assign a project to a PM", "Administration -> Projects -> Project manager", "Administrator"],
         ["Set a role or branch", "Administration -> Users", "Administrator"],
         ["See who changed something", "Activity -> filter or search", "Any user"],

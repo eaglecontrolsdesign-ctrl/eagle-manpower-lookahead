@@ -7,9 +7,7 @@ import { uid } from '../../engine/ids.js'
 import { projColor } from '../../engine/colors.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { OFFICES } from '../../engine/constants.js'
-
-const ROLE_ORDER = { pm: 0, coordinator: 1, admin: 2 }
-const ROLE_TAG = { pm: ' (PM)', coordinator: ' (Coordinator)', admin: ' (Admin)' }
+import { userRoles, rolesLabel, rolesSortKey } from '../../engine/roles.js'
 
 export default function ProjectsAdmin() {
   const { board, addProject, updateProject, removeProject } = useBoard()
@@ -21,7 +19,7 @@ export default function ProjectsAdmin() {
   useEffect(() => {
     return onSnapshot(collection(db, 'users'), (snap) => {
       const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      list.sort((a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3) || a.id.localeCompare(b.id))
+      list.sort((a, b) => rolesSortKey(a) - rolesSortKey(b) || a.id.localeCompare(b.id))
       setUsers(list)
     })
   }, [])
@@ -71,7 +69,7 @@ export default function ProjectsAdmin() {
             {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.id}
-                {ROLE_TAG[u.role] || ''}
+                {userRoles(u).length ? ' (' + rolesLabel(userRoles(u)) + ')' : ''}
               </option>
             ))}
           </select>

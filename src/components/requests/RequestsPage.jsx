@@ -19,7 +19,8 @@ export default function RequestsPage() {
   const { board, setDay } = useBoard()
   const toast = useToast()
   const ui = useUi()
-  const canAct = rq.scope.isAdmin || rq.scope.role === 'coordinator'
+  const isCoordinator = (rq.scope.roles || []).includes('coordinator')
+  const canAct = rq.scope.isAdmin || isCoordinator
   const [tab, setTab] = useState(canAct ? 'action' : 'mine')
   const [replyFor, setReplyFor] = useState(null)
   const [replyText, setReplyText] = useState('')
@@ -104,7 +105,7 @@ export default function RequestsPage() {
           <div className="page-title">Requests</div>
           <div className="page-subtitle">
             Ask another branch's coordinator for one of their people · approving moves the days on the board
-            {rq.scope.role === 'coordinator' && rq.scope.branch ? ' · you coordinate ' + rq.scope.branch : ''}
+            {isCoordinator && rq.scope.branch ? ' · you coordinate ' + rq.scope.branch : ''}
           </div>
         </div>
       </div>

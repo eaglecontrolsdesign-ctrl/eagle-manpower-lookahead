@@ -3,6 +3,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut as fbSignOut } 
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { writeAudit } from './auditWrite.js'
+import { userRoles, primaryRole } from '../engine/roles.js'
 
 const AuthContext = createContext(null)
 
@@ -19,6 +20,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState(null)
+  // All of the account's roles (engine/roles.js) — any mix of pm / coordinator / admin.
+  const [roles, setRoles] = useState([])
   const [branch, setBranch] = useState('')
   const [roleLoading, setRoleLoading] = useState(true)
 
@@ -32,6 +35,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user || !user.email) {
       setRole(null)
+      setRoles([])
       setBranch('')
       setRoleLoading(false)
       return
@@ -47,12 +51,15 @@ export function AuthProvider({ children }) {
       ref,
       (snap) => {
         const data = snap.exists() ? snap.data() : {}
-        setRole(data.role || null)
+        const r = userRoles(data)
+        setRoles(r)
+        setRole(r.length ? primaryRole(r) : null)
         setBranch(data.branch || '')
         setRoleLoading(false)
       },
       () => {
         setRole(null)
+        setRoles([])
         setBranch('')
         setRoleLoading(false)
       }
@@ -71,13 +78,15 @@ export function AuthProvider({ children }) {
     await fbSignOut(auth)
   }
 
-  const isAdmin = role === 'admin'
+  const isAdmin = roles.includes('admin')
   // Project managers only see the projects assigned to them (project.pmEmail) on PM Demand.
-  const isPm = role === 'pm'
+  const isPm = roles.includes('pm')
   // Coordinators answer manpower requests for their branch (engine/requests.js).
-  const isCoordinator = role === 'coordinator'
+  const isCoordinator = roles.includes('coordinator')
+  // Any role may edit; an account with none is view-only (engine/roles.js).
+  const canEdit = roles.length > 0
 
-  return <AuthContext.Provider value={{ user, loading, role, branch, roleLoading, isAdmin, isPm, isCoordinator, signIn, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, role, roles, branch, roleLoading, isAdmin, isPm, isCoordinator, canEdit, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

@@ -1,5 +1,5 @@
 import { dayVal } from './schedule.js'
-import { personPlanningRole } from './planningRoles.js'
+import { personPlanningRoles } from './planningRoles.js'
 import { projColor } from './colors.js'
 import { projectWeekCoverage } from './demand.js'
 
@@ -43,7 +43,7 @@ export function buildScheduleRows(db, weeks, people) {
   const rows = [['SCHEDULE'], ['Tech', 'Job title', 'Planning role', 'Office'].concat(weeks.map((w) => w.label))]
   people.forEach((per) => {
     rows.push(
-      [per.name, per.role || '', personPlanningRole(per), per.office || 'Charlotte'].concat(
+      [per.name, per.role || '', personPlanningRoles(per).join(' / '), per.office || 'Charlotte'].concat(
         weeks.map((w) => weekAgg(db, per.id, w.key).map((a) => a.name + (a.count < 5 ? ' x' + a.count : '')).join(' / '))
       )
     )

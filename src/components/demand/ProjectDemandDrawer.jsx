@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { usePermissions } from '../../hooks/usePermissions.js'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { projectWeekCoverage, coverageClass, coverageLabel } from '../../engine/demand.js'
-import { personPlanningRole } from '../../engine/planningRoles.js'
+import { personPlanningRoles } from '../../engine/planningRoles.js'
 import { normalizeSkills } from '../../engine/skills.js'
 import { projColor } from '../../engine/colors.js'
 import DemandRoleRow from './DemandRoleRow.jsx'
@@ -60,7 +60,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   }
 
   function save() {
-    if (readOnly) return toast('Read-only: this project belongs to the ' + project.office + ' branch', 'error')
+    if (readOnly) return toast(perms.viewer ? 'Your account is view-only' : 'Read-only: this project belongs to the ' + project.office + ' branch', 'error')
     saveSkills()
     if (rows.length) {
       setDemand(projectId, activeWeek, { pmId, status, notes: notes.trim(), roles: rows, updatedAt: Date.now() })
@@ -72,7 +72,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
   }
 
   function clearWeek() {
-    if (readOnly) return toast('Read-only: this project belongs to the ' + project.office + ' branch', 'error')
+    if (readOnly) return toast(perms.viewer ? 'Your account is view-only' : 'Read-only: this project belongs to the ' + project.office + ' branch', 'error')
     if (!window.confirm('Clear the PM demand plan for this project and week?')) return
     setDemand(projectId, activeWeek, null)
     setRows([])
@@ -98,8 +98,10 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
 
         {readOnly && (
           <div className="tracker-banner readonly">
-            <b>Read-only.</b> This project belongs to the {project.office} branch; you can edit {perms.branch}. Ask an administrator to
-            make it shared or set you as its project manager.
+            <b>Read-only.</b>{' '}
+            {perms.viewer
+              ? 'Your account is view-only. Ask an administrator for the Scheduler or PM role to plan demand.'
+              : 'This project belongs to the ' + project.office + ' branch; you can edit ' + perms.branch + '. Ask an administrator to make it shared or set you as its project manager.'}
           </div>
         )}
 
@@ -155,7 +157,7 @@ export default function ProjectDemandDrawer({ projectId, week, onClose }) {
               <option value="">Select PM / owner</option>
               {board.people.map((per) => (
                 <option key={per.id} value={per.id}>
-                  {per.name} · {personPlanningRole(per)}
+                  {per.name} · {personPlanningRoles(per).join(' / ')}
                 </option>
               ))}
             </select>

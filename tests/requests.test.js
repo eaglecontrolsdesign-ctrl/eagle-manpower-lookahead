@@ -20,13 +20,17 @@ describe('requests', () => {
       { id: 'a', role: 'coordinator', branch: 'Nashville' },
       { id: 'b', role: 'coordinator', branch: 'Charlotte' },
       { id: 'c', role: 'member', branch: 'Nashville' },
+      { id: 'd', roles: ['pm', 'coordinator'], branch: 'Nashville' },
     ]
-    expect(coordinatorsFor(users, 'Nashville').map((u) => u.id)).toEqual(['a'])
+    expect(coordinatorsFor(users, 'Nashville').map((u) => u.id)).toEqual(['a', 'd'])
   })
 
   it('only the branch coordinator or an admin can resolve', () => {
     const req = { status: 'open', toBranch: 'Nashville' }
     expect(canResolve(req, nashCoord)).toBe(true)
+    // Roles can be combined: a PM who is also the Nashville coordinator.
+    expect(canResolve(req, { isAdmin: false, roles: ['pm', 'coordinator'], branch: 'Nashville' })).toBe(true)
+    expect(canResolve(req, { isAdmin: false, roles: ['pm'], branch: 'Nashville' })).toBe(false)
     expect(canResolve(req, cltCoord)).toBe(false)
     expect(canResolve(req, member)).toBe(false)
     expect(canResolve(req, admin)).toBe(true)

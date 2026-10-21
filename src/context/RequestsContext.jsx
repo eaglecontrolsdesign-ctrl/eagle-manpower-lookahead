@@ -13,13 +13,13 @@ const RequestsContext = createContext(null)
 // answer, and resolve each one. Everyone sees the list; what they can do with it is decided
 // by their role and branch (users/{email}).
 export function RequestsProvider({ children }) {
-  const { user, role, branch, isAdmin } = useAuth()
+  const { user, role, roles, branch, isAdmin } = useAuth()
   const toast = useToast()
   const [requests, setRequests] = useState([])
   const [users, setUsers] = useState([])
   const [ready, setReady] = useState(false)
   const me = userDocId(user && user.email)
-  const scope = { isAdmin, role, branch: branch || '', me }
+  const scope = { isAdmin, role, roles, branch: branch || '', me }
   const scopeRef = useRef(scope)
   scopeRef.current = scope
   const seenRef = useRef(null)

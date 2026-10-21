@@ -9,6 +9,13 @@ export function inferPlanningRole(title) {
   return 'Controls Technician'
 }
 
+// A person can carry several planning roles (person.planningRoles, first = primary); older
+// records have a single planningRole, or none and we infer one from the job title.
+export function personPlanningRoles(person) {
+  if (Array.isArray(person.planningRoles) && person.planningRoles.length) return person.planningRoles
+  return [person.planningRole || inferPlanningRole(person.role)]
+}
+
 export function personPlanningRole(person) {
-  return person.planningRole || inferPlanningRole(person.role)
+  return personPlanningRoles(person)[0]
 }
