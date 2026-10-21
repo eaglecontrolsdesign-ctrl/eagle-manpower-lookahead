@@ -129,7 +129,7 @@ export default function UsersAdmin() {
                   </option>
                 ))}
               </select>
-              <div className="pill-tabs" title={locked ? 'Protected account — roles can\'t be changed' : $1}>
+              <div className="pill-tabs" title={locked ? 'Protected account — roles can\'t be changed' : 'Toggle roles: Scheduler (edits the board) · PM (own projects only on PM Demand) · Coordinator (answers manpower requests for their branch) · Admin. None = Member, view only.'}>
                 <button className={'pill-tab' + (!roles.length ? ' on' : '')} disabled={locked} onClick={() => setRoles([])}>
                   Member
                 </button>
