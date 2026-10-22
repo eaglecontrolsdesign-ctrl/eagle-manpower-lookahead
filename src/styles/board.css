@@ -181,6 +181,119 @@
   color: #fbbf24;
 }
 
+/* Several jobs on one day (engine/segments.js): one chip per job, stacked. */
+/* The stack fills the cell and every chip takes an equal share of it: two jobs are half and
+   half, three are thirds — the hours are on the labels, not in the chip sizes. */
+.day-cell .chip-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+}
+.day-cell .chip-stack .chip {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+.day-cell .chip-stack.multi .chip {
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 1.15;
+  justify-content: center;
+}
+.day-cell .chip .chip-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.day-cell .chip .chip-name .chip-label {
+  min-width: 0;
+}
+/* On a split day each job gets one line, so the row stays the normal height. */
+.day-cell .chip-stack.multi .chip .chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.day-cell .chip .chip-hours {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 14px;
+  background: color-mix(in srgb, var(--chip-color, var(--accent)) 25%, transparent);
+  color: var(--text);
+}
+.day-cell .chip .chip-hours.ot {
+  background: color-mix(in srgb, var(--warn) 30%, transparent);
+  color: var(--warn);
+}
+.day-cell .chip-more {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.day-cell .chip-stack .chip-more {
+  flex: 0 0 auto;
+  line-height: 12px;
+}
+.ot-badge {
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  background: color-mix(in srgb, var(--warn) 25%, transparent);
+  color: var(--warn);
+}
+.segment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.segment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.segment-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.segment-name {
+  flex: 1;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.segment-hours {
+  width: 56px;
+  text-align: right;
+}
+.segment-unit {
+  color: var(--muted);
+  font-size: 12px;
+}
+.pill-input {
+  width: 72px;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.pill-input.on {
+  outline: 2px solid var(--accent);
+}
+
 .day-cell .chip .chip-note-dot {
   position: absolute;
   top: 3px;

@@ -1,4 +1,4 @@
-const REQUIRED_KEYS = ['people', 'projects', 'overhead', 'days', 'notes', 'demands', 'staffingRoles', 'holidays', 'aiHistory']
+const REQUIRED_KEYS = ['people', 'projects', 'overhead', 'days', 'segments', 'notes', 'demands', 'staffingRoles', 'holidays', 'aiHistory']
 
 export function serializeBoard(db) {
   return JSON.stringify(db, null, 2)
@@ -16,7 +16,7 @@ export function parseBackup(json) {
   }
   const board = { ...data }
   REQUIRED_KEYS.forEach((key) => {
-    if (board[key] == null) board[key] = key === 'days' || key === 'notes' || key === 'demands' ? {} : []
+    if (board[key] == null) board[key] = key === 'days' || key === 'segments' || key === 'notes' || key === 'demands' ? {} : []
   })
   return { ok: true, board }
 }

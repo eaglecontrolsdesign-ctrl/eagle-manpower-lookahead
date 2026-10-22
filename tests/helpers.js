@@ -4,6 +4,7 @@ export function makeDb(overrides = {}) {
     projects: [],
     overhead: [],
     days: {},
+    segments: {},
     notes: {},
     demands: {},
     staffingRoles: [],

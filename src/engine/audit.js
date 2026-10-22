@@ -90,6 +90,17 @@ export function describeMapChanges(board, field, entries, before = {}) {
       groups.get(gk).dis.push(Number(di))
     })
     groups.forEach((g) => lines.push(personName(board, g.pid) + ' · ' + dayRange(g.wk, g.dis) + ': ' + g.from + ' → ' + g.to))
+  } else if (field === 'segments') {
+    Object.entries(entries).forEach(([key, after]) => {
+      const [pid, wk, di] = key.split('|')
+      const who = personName(board, pid) + ' · ' + fmtDay(wk, Number(di))
+      const spell = (list) => (Array.isArray(list) && list.length ? list.map((s) => jobName(board, s.id) + ' ' + s.hours + 'h').join(' + ') : null)
+      const from = spell(before[key])
+      const to = spell(after)
+      if (from === to) return
+      if (!to) lines.push(who + ': hours split removed' + (from ? ' (was ' + from + ')' : ''))
+      else lines.push(who + ': ' + to + (from ? ' (was ' + from + ')' : ''))
+    })
   } else if (field === 'notes') {
     Object.entries(entries).forEach(([key, after]) => {
       const [pid, wk, di] = key.split('|')

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { dayVal } from '../../engine/schedule.js'
 import { projColor } from '../../engine/colors.js'
+import { daySegments, hoursLabel, overtimeHours, FULL_DAY, HOLIDAY } from '../../engine/segments.js'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useBoardDnd } from './DndContext.jsx'
@@ -8,19 +8,21 @@ import { trackerNoteKind, trackerNoteFor } from '../../engine/trackerNotes.js'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 const CLICK_DELAY_MS = 220
+const MAX_CHIPS = 3
 
 function findColored(board, pid) {
   const idx = board.projects.findIndex((p) => p.id === pid)
   if (idx >= 0) return { name: board.projects[idx].name, color: projColor(board.projects[idx], idx) }
   const o = board.overhead.find((x) => x.id === pid)
   if (o) return { name: o.name, color: o.color || '#94a3b8' }
-  return null
+  return { name: pid, color: '#94a3b8' }
 }
 
 // dayIndexes: a run of one or more consecutive day indices (within the same week) that all
-// share the same assignment. Runs longer than one day render as a single wider cell, and are
-// edited/cleared as a block; drag-and-drop stays scoped to single-day cells to keep the swap
-// semantics unambiguous.
+// carry the identical assignment(s). Runs longer than one day render as a single wider cell and
+// are edited as a block; drag-and-drop stays scoped to single-day cells.
+// A day can hold several jobs for any number of hours (engine/segments.js): each one is its own
+// chip inside the cell, and each chip drags on its own — only that job's hours move.
 // locked: a read-only reason (engine/permissions.js readOnlyReason) when this person is outside
 // the user's branch — the cell then neither opens an editor nor takes part in drag-and-drop.
 // requested: an open manpower request covers one of these days (engine/requests.js).
@@ -33,9 +35,12 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
   useEffect(() => () => clearTimeout(clickTimerRef.current), [])
   const dayIndex = dayIndexes[0]
   const isRun = dayIndexes.length > 1
-  const value = dayVal(board.days, board.holidays, personId, wkKey, dayIndex)
-  const isHoliday = value === '__HOL'
-  const info = value && !isHoliday ? findColored(board, value) : null
+  const segments = daySegments(board, personId, wkKey, dayIndex)
+  const isHoliday = segments.length === 1 && segments[0].id === HOLIDAY && !board.days[personId + '|' + wkKey + '|' + dayIndex]
+  const hasValue = segments.length > 0
+  const total = segments.reduce((s, x) => s + x.hours, 0)
+  const isPlainFullDay = segments.length === 1 && segments[0].hours === FULL_DAY
+  const overtime = overtimeHours(segments)
   // The project tracker (PCC) writes its own day notes with a recognizable prefix (engine/
   // trackerNotes.js) — those become a dashed-border badge instead of a plain note.
   const { tracker } = trackerNoteFor(board.notes, personId, wkKey, dayIndexes)
@@ -47,19 +52,19 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
     .filter((n) => n.text && !trackerNoteKind(n.text))
   const hasNote = noteEntries.length > 0
   const notesUniform = isRun && noteEntries.length === dayIndexes.length && noteEntries.every((n) => n.text === noteEntries[0].text)
-  // One line per day when notes differ (a run can carry a different note on each joined day);
-  // collapse to a single untagged line only when every day in the run shares the identical note.
   const notePreviewLines = !hasNote ? [] : notesUniform ? [{ tag: '', text: noteEntries[0].text }] : noteEntries.map((n) => ({ tag: '(' + DAY_LABELS[n.i] + ') ', text: n.text }))
   const rangeLabel = isRun ? DAY_LABELS[dayIndex] + '–' + DAY_LABELS[dayIndexes[dayIndexes.length - 1]] : null
+  const summary = segments.map((s) => findColored(board, s.id).name + (isPlainFullDay ? '' : ' ' + hoursLabel(s.hours))).join(' + ')
 
-  function handleDragStart(e) {
-    const ok = !locked && dnd.startDayDrag(personId, wkKey, dayIndex)
+  function startSegmentDrag(e, seg) {
+    const ok = !locked && !isRun && !isHoliday && dnd.startDayDrag(personId, wkKey, dayIndex, seg.id)
     if (!ok) {
       e.preventDefault()
       return
     }
+    e.stopPropagation()
     e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', personId + '|' + wkKey + '|' + dayIndex)
+    e.dataTransfer.setData('text/plain', personId + '|' + wkKey + '|' + dayIndex + '|' + seg.id)
   }
 
   function handleDragOver(e) {
@@ -102,13 +107,19 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
     onOpenNote(personId, wkKey, dayIndexes)
   }
 
+  const shown = segments.slice(0, MAX_CHIPS)
+  const hidden = segments.length - shown.length
+
   return (
     <td
-      className={'day-cell' + (isHoliday ? ' holiday' : !value ? ' empty' : '') + (locked ? ' locked' : '') + (requested ? ' requested' : '')}
+      className={
+        'day-cell' +
+        (isHoliday ? ' holiday' : !hasValue ? ' empty' : '') +
+        (segments.length > 1 ? ' split' : '') +
+        (locked ? ' locked' : '') +
+        (requested ? ' requested' : '')
+      }
       colSpan={dayIndexes.length}
-      draggable={!isRun && !!value && !isHoliday && !locked}
-      onDragStart={handleDragStart}
-      onDragEnd={dnd.endDayDrag}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -119,8 +130,9 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
         (locked ? '🔒 ' + locked + (onRequest ? ' · click to request them' : '') + '\n' : '') +
         (isHoliday
           ? 'Holiday'
-          : info
-            ? info.name +
+          : hasValue
+            ? summary +
+              (isPlainFullDay ? '' : ' · ' + hoursLabel(total) + (overtime ? ' (' + hoursLabel(overtime) + ' overtime)' : '')) +
               (rangeLabel ? ' · ' + rangeLabel : '') +
               (tracker ? ' · ' + tracker.text : '') +
               (hasNote ? '\n' + notePreviewLines.map((n) => n.tag + n.text).join('\n') : ' · double-click to add a note')
@@ -131,18 +143,38 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
         <div className="chip" style={{ background: 'var(--na)', borderColor: 'var(--na)', color: 'var(--muted)', fontSize: 10 }}>
           Holiday
         </div>
-      ) : info ? (
-        <div className={'chip' + (tracker ? ' chip--' + tracker.kind : '')} style={{ '--chip-color': info.color }}>
-          {info.name}
-          {tracker && <span className={'chip-tracker ' + tracker.kind}>{tracker.kind === 'conflict' ? '⚠ Tracker wants here' : '📅 Tracker'}</span>}
-          {requested && <span className="chip-request">✉ Requested</span>}
-          {hasNote && <span className="chip-note-dot" />}
-          {notePreviewLines.map((n, i) => (
-            <div key={i} className="chip-note-preview">
-              {n.tag && <b>{n.tag}</b>}
-              {n.text}
-            </div>
-          ))}
+      ) : hasValue ? (
+        <div className={'chip-stack' + (segments.length > 1 ? ' multi' : '')}>
+          {shown.map((seg, si) => {
+            const info = findColored(board, seg.id)
+            const first = si === 0
+            return (
+              <div
+                key={seg.id}
+                className={'chip' + (first && tracker ? ' chip--' + tracker.kind : '') + (segments.length > 1 ? ' chip--part' : '')}
+                style={{ '--chip-color': info.color }}
+                draggable={!isRun && !isHoliday && !locked}
+                onDragStart={(e) => startSegmentDrag(e, seg)}
+                onDragEnd={dnd.endDayDrag}
+              >
+                <span className="chip-name">
+                  <span className="chip-label">{info.name}</span>
+                  {!isPlainFullDay && <span className={'chip-hours' + (first && overtime ? ' ot' : '')}>{hoursLabel(seg.hours)}</span>}
+                </span>
+                {first && tracker && <span className={'chip-tracker ' + tracker.kind}>{tracker.kind === 'conflict' ? '⚠ Tracker wants here' : '📅 Tracker'}</span>}
+                {first && requested && <span className="chip-request">✉ Requested</span>}
+                {first && hasNote && <span className="chip-note-dot" />}
+                {first &&
+                  notePreviewLines.map((n, i) => (
+                    <div key={i} className="chip-note-preview">
+                      {n.tag && <b>{n.tag}</b>}
+                      {n.text}
+                    </div>
+                  ))}
+              </div>
+            )
+          })}
+          {hidden > 0 && <div className="chip-more">+{hidden} more · {hoursLabel(total)}</div>}
         </div>
       ) : requested ? (
         <span className="chip-request floating">✉ Requested</span>

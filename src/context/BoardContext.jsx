@@ -3,6 +3,7 @@ import { doc, onSnapshot, deleteField, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { defaultBoard } from '../engine/seed.js'
 import { dayKeyOf, noteKeyOf } from '../engine/schedule.js'
+import { dayPatchFor } from '../engine/segments.js'
 import { demandKey } from '../engine/demand.js'
 import { useAuth, userDocId } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
@@ -13,7 +14,8 @@ import { auditDoc, newAuditRef } from './auditWrite.js'
 const BoardContext = createContext(null)
 const BOARD_REF = doc(db, 'boards', 'main')
 const FLUSH_DELAY_MS = 500
-const MAP_FIELDS = ['days', 'notes', 'demands']
+const MAP_FIELDS = ['days', 'segments', 'notes', 'demands']
+const EMPTY_MAPS = () => ({ days: {}, segments: {}, notes: {}, demands: {} })
 
 export function BoardProvider({ children }) {
   const [board, setBoard] = useState(null)
@@ -40,11 +42,11 @@ export function BoardProvider({ children }) {
   // "queued, not sent yet" and "sent, awaiting confirmation". Kept until the write is confirmed
   // so an incoming snapshot (which may still carry pre-write data) can never clobber a local
   // edit — every snapshot gets these re-applied on top before it reaches component state.
-  const unconfirmedRef = useRef({ map: { days: {}, notes: {}, demands: {} }, array: {} })
+  const unconfirmedRef = useRef({ map: EMPTY_MAPS(), array: {} })
   // The last snapshot exactly as Firestore sent it (no local edits applied) — the "before" side
   // of the activity-log entry each flush writes (engine/audit.js).
   const confirmedRef = useRef(null)
-  const beforeRef = useRef({ map: { days: {}, notes: {}, demands: {} }, array: {} })
+  const beforeRef = useRef({ map: EMPTY_MAPS(), array: {} })
   const timerRef = useRef(null)
 
   function withUnconfirmed(data) {
@@ -113,7 +115,7 @@ export function BoardProvider({ children }) {
     })
     const arrayToSend = { ...unconfirmedRef.current.array }
     const beforeSnapshot = beforeRef.current
-    beforeRef.current = { map: { days: {}, notes: {}, demands: {} }, array: {} }
+    beforeRef.current = { map: EMPTY_MAPS(), array: {} }
 
     const patch = {}
     Object.entries(mapToSend).forEach(([field, entries]) => {
@@ -130,7 +132,12 @@ export function BoardProvider({ children }) {
     // same batch creates this entry under the signed-in user's identity (boards/main.lastAuditId).
     const named = boardRef.current || confirmedRef.current || { people: [], projects: [], overhead: [] }
     const lines = []
-    Object.entries(mapToSend).forEach(([field, entries]) => lines.push(...describeMapChanges(named, field, entries, beforeSnapshot.map[field] || {})))
+    // A day whose hour split changed in the same flush is described by the split, not twice.
+    Object.entries(mapToSend).forEach(([field, entries]) => {
+      let e = entries
+      if (field === 'days' && mapToSend.segments) e = Object.fromEntries(Object.entries(entries).filter(([k]) => !(k in mapToSend.segments)))
+      lines.push(...describeMapChanges(named, field, e, beforeSnapshot.map[field] || {}))
+    })
     Object.entries(arrayToSend).forEach(([field, val]) => lines.push(...describeArrayChanges(field, beforeSnapshot.array[field], val)))
     const fields = [...Object.keys(mapToSend), ...Object.keys(arrayToSend)]
     const auditRef = newAuditRef()
@@ -206,13 +213,38 @@ export function BoardProvider({ children }) {
     // Clearing a day that is already empty is not a change — don't queue a write (or a log entry).
     if (empty && !(boardRef.current && boardRef.current.days && boardRef.current.days[key])) return
     if (!mayEdit('days', key)) return
+    const hadSplit = !!(boardRef.current && boardRef.current.segments && boardRef.current.segments[key])
     optimisticUpdate((prev) => {
       const days = { ...prev.days }
       if (value == null || value === '') delete days[key]
       else days[key] = value
-      return { ...prev, days }
+      const segments = { ...(prev.segments || {}) }
+      delete segments[key]
+      return { ...prev, days, segments }
     })
     markMapEdit('days', key, value == null || value === '' ? undefined : value)
+    if (hadSplit) markMapEdit('segments', key, undefined)
+  }
+
+  // A day's full list of jobs and hours (engine/segments.js): stores the primary job in days
+  // and the split in segments (or just days, for a plain 8-hour day).
+  function setDaySegments(personId, wkKey, dayIndex, list) {
+    const key = dayKeyOf(personId, wkKey, dayIndex)
+    if (!mayEdit('days', key)) return
+    const p = dayPatchFor(list)
+    const prevDay = boardRef.current && boardRef.current.days ? boardRef.current.days[key] : undefined
+    const prevSplit = !!(boardRef.current && boardRef.current.segments && boardRef.current.segments[key])
+    optimisticUpdate((prev) => {
+      const days = { ...prev.days }
+      const segments = { ...(prev.segments || {}) }
+      if (p.day === undefined) delete days[key]
+      else days[key] = p.day
+      if (p.segments === undefined) delete segments[key]
+      else segments[key] = p.segments
+      return { ...prev, days, segments }
+    })
+    if (p.day !== prevDay) markMapEdit('days', key, p.day)
+    if (p.segments !== undefined || prevSplit) markMapEdit('segments', key, p.segments)
   }
 
   function setNote(personId, wkKey, dayIndex, text) {
@@ -284,6 +316,17 @@ export function BoardProvider({ children }) {
   // in place) so map-field deletions/changes are correctly detected and queued.
   function applyPatch(partial) {
     const prevSnapshot = boardRef.current
+    if (partial.days && !partial.segments && prevSnapshot && prevSnapshot.segments) {
+      const segments = { ...prevSnapshot.segments }
+      let changed = false
+      Object.keys(segments).forEach((k) => {
+        if (partial.days[k] !== (prevSnapshot.days || {})[k]) {
+          delete segments[k]
+          changed = true
+        }
+      })
+      if (changed) partial = { ...partial, segments }
+    }
     // A branch user's bulk edits (drag-and-drop swaps, AI plans, imports) keep only the entries
     // inside their branch; anything else is left exactly as it was.
     if (isLimited(scope) && prevSnapshot) {
@@ -328,6 +371,7 @@ export function BoardProvider({ children }) {
     missing,
     initializeBoard,
     setDay,
+    setDaySegments,
     setNote,
     setDemand,
     addPerson,

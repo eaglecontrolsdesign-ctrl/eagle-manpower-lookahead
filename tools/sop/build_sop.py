@@ -12,8 +12,8 @@ from reportlab.pdfgen import canvas as canvas_mod
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(HERE, "letterhead-logo.png")
 OUT_PATH = os.path.normpath(os.path.join(HERE, "..", "..", "public", "docs", "Eagle-Manpower-Lookahead-SOP.pdf"))
-REV = "Rev 3.2"
-REV_NOTE = "roles (incl. view-only Member and Scheduler), display names, protected admin account, multiple planning roles, Service vs. Projects, manpower requests, activity log, PCC integration"
+REV = "Rev 3.3"
+REV_NOTE = "hours within a day (part days, several jobs, overtime), roles (incl. view-only Member and Scheduler), display names, protected admin account, multiple planning roles, Service vs. Projects, manpower requests, activity log, PCC integration"
 
 LEFT_MARGIN = 0.75 * inch
 RIGHT_MARGIN = 0.75 * inch
@@ -237,9 +237,19 @@ story.extend(block(
         "Each person shows two utilization pills: project / job work, and office / overhead time",
         "Click an empty or existing day cell to open the assignment editor",
         "Use the Apply To day pills to assign one day or several days at once within that week",
-        "Choose the job or overhead to assign, or clear the day",
-        "Use the Job Tray (Show/Hide Job Tray) to drag jobs or overhead directly onto a day",
-        "Drag an existing assignment onto another day to reassign it, or onto the Drop here to clear bar that appears along the bottom of the screen to remove it (Ctrl+Z undoes the last clear)",
+        ("Pick the hours, then the job or overhead:", [
+            "Full day (the default) makes the day that job – the way the board has always worked",
+            "Half day, 2h, or any number typed in the Other box adds that job alongside whatever is already on the day, e.g. a tech on half days Mon / Wed / Fri, or 2h of a service call in a project day",
+            "A day can hold several jobs; the editor lists them with editable hour boxes and a remove button each, and shows the day’s total",
+            "Overtime is allowed – a day over 8h shows the extra hours in amber on the board and in the editor",
+        ]),
+        ("Reading a split day on the board:", [
+            "One chip per job, sharing the cell equally; each chip carries its hours (“Project Faraday 4h”); hover for the full breakdown",
+            "Utilization pills, PM demand coverage, the dashboard, reports and the crew message all count real hours, so a half day counts as 4h",
+        ]),
+        "Use the Job Tray (Show/Hide Job Tray) to drag jobs or overhead directly onto a day (a full day, replacing what is there)",
+        "Drag a chip onto another day to move just that job’s hours there (it joins whatever is on the target day); two plain full days swap when one is dropped on the other",
+        "Drag a chip onto the Drop here to clear bar along the bottom of the screen to take that job off that day (Ctrl+Z undoes the last clear)",
         ("Double-click a day (or a merged multi-day block) to add a dispatch note:", [
             "Each joined day gets its own note box \u2013 a 3-day block can carry three different notes",
             "Every day with a note shows its own preview line on the chip (tagged by day when they differ)",
@@ -423,6 +433,8 @@ story.append(table(
     ["I want to\u2026", "Where", "Who"],
     [
         ["Assign or clear a day", "Manpower Board -> click a day cell", "Any editing role, within their branch"],
+        ["Put part of a day, or a second job, on a day", "Manpower Board -> click the day -> Half day / 2h / Other -> pick the job", "Any editing role, within their branch"],
+        ["Move one job's hours to another day", "Manpower Board -> drag that chip", "Any editing role, within their branch"],
         ["Add a dispatch note", "Manpower Board -> double-click a day or block", "Any editing role, within their branch"],
         ["Borrow someone from another branch", "Manpower Board -> click their day -> Send request", "Any editing role with a branch"],
         ["Check my own schedule (read-only)", "Manpower Board / Dashboard", "Member (no role), e.g. technicians"],

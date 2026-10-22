@@ -12,6 +12,7 @@ export function defaultBoard() {
     projects: copy.projects,
     overhead: copy.overhead,
     days: {},
+    segments: {},
     notes: {},
     demands: {},
     staffingRoles: copy.staffingRoles,

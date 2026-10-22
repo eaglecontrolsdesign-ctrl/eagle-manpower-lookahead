@@ -1,4 +1,4 @@
-import { dayVal } from './schedule.js'
+import { jobHoursOnDay, dayHours } from './segments.js'
 import { personPlanningRoles } from './planningRoles.js'
 import { projColor } from './colors.js'
 
@@ -35,7 +35,7 @@ export function projectWeekCoverage(db, projectId, wkKey) {
   let assigned = 0
   db.people.forEach((per) => {
     let hours = 0
-    for (let d = 0; d < 5; d++) if (dayVal(db.days, db.holidays, per.id, wkKey, d) === projectId) hours += 8
+    for (let d = 0; d < 5; d++) hours += jobHoursOnDay(db, per.id, wkKey, d, projectId)
     if (hours) {
       assigned += hours
       assignedPeople.add(per.id)
@@ -148,7 +148,7 @@ export function weekDemandSummary(db, wkKey, officeFilter) {
   const capacity = ppl.length * 40
   let scheduled = 0
   ppl.forEach((per) => {
-    for (let d = 0; d < 5; d++) if (dayVal(db.days, db.holidays, per.id, wkKey, d)) scheduled += 8
+    for (let d = 0; d < 5; d++) scheduled += dayHours(db, per.id, wkKey, d)
   })
   return { demand, gap, draft, open: Math.max(0, capacity - scheduled) }
 }

@@ -1,7 +1,7 @@
 import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
-import { dayVal } from '../../engine/schedule.js'
+import { dayHours } from '../../engine/segments.js'
 import { personUtil } from '../../engine/utilization.js'
 import { projectDemandData } from '../../engine/demand.js'
 import { getAttentionAlerts } from '../../engine/alerts.js'
@@ -19,7 +19,7 @@ export default function Dashboard() {
   const people = ui.officeFilter ? board.people.filter((p) => (p.office || 'Charlotte') === ui.officeFilter) : board.people
   const capacity = Math.max(people.length * weeks.length * 40, 1)
   let assigned = 0
-  people.forEach((per) => weeks.forEach((w) => { for (let d = 0; d < 5; d++) if (dayVal(board.days, board.holidays, per.id, w.key, d)) assigned += 8 }))
+  people.forEach((per) => weeks.forEach((w) => { for (let d = 0; d < 5; d++) assigned += dayHours(board, per.id, w.key, d) }))
   const util = Math.round((assigned / capacity) * 100)
   const over = people.filter((p) => personUtil(board, p, weeks) >= 100)
   const under = people.filter((p) => personUtil(board, p, weeks) < 50)

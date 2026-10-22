@@ -1,4 +1,4 @@
-import { dayVal } from './schedule.js'
+import { daySegments, daySignature, hoursLabel, FULL_DAY } from './segments.js'
 import { projColor } from './colors.js'
 import { OFFICES } from './constants.js'
 
@@ -15,16 +15,25 @@ function nameOf(db, pid) {
 
 // Collapses a person's 7-day assignment pattern for one week into readable segments,
 // e.g. "all week", "Mon–Wed", or a single day.
+// A day with several jobs, or part of a day, is spelled out with hours ("A 4h + B 4h").
+function dayLabel(db, segs) {
+  if (!segs.length) return null
+  if (segs.length === 1 && segs[0].hours === FULL_DAY) return nameOf(db, segs[0].id)
+  return segs.map((s) => nameOf(db, s.id) + ' ' + hoursLabel(s.hours)).join(' + ')
+}
+
 export function crewSegments(db, personId, wkKey) {
-  const vals = [0, 1, 2, 3, 4, 5, 6].map((i) => dayVal(db.days, db.holidays, personId, wkKey, i))
+  const segs = [0, 1, 2, 3, 4, 5, 6].map((i) => daySegments(db, personId, wkKey, i))
+  const vals = segs.map(daySignature)
+  const entry = (i, when) => ({ pid: segs[i].length ? segs[i][0].id : null, label: dayLabel(db, segs[i]), when })
   const wkdays = vals.slice(0, 5)
-  if (wkdays.every((v) => v === wkdays[0]) && !vals[5] && !vals[6]) return [{ pid: wkdays[0] || null, when: 'all week' }]
-  if (vals.every((v) => v === vals[0])) return [{ pid: vals[0] || null, when: 'all 7 days' }]
+  if (wkdays.every((v) => v === wkdays[0]) && !vals[5] && !vals[6]) return [entry(0, 'all week')]
+  if (vals.every((v) => v === vals[0])) return [entry(0, 'all 7 days')]
   const parts = []
   let s = 0
   for (let i = 1; i <= 7; i++) {
     if (i === 7 || vals[i] !== vals[s]) {
-      if (vals[s] || s < 5) parts.push({ pid: vals[s] || null, when: i - 1 === s ? DAY_NAMES[s] : DAY_NAMES[s] + '–' + DAY_NAMES[i - 1] })
+      if (vals[s] || s < 5) parts.push(entry(s, i - 1 === s ? DAY_NAMES[s] : DAY_NAMES[s] + '–' + DAY_NAMES[i - 1]))
       s = i
     }
   }
@@ -67,7 +76,7 @@ export function buildCrewMessage(db, week, office) {
           per.name +
           ': ' +
           segs
-            .map((sg) => (sg.pid ? nameOf(db, sg.pid) : 'unassigned') + (sg.when === 'all week' || sg.when === 'all 7 days' ? ' (' + sg.when + ')' : ' ' + sg.when))
+            .map((sg) => (sg.pid ? sg.label || nameOf(db, sg.pid) : 'unassigned') + (sg.when === 'all week' || sg.when === 'all 7 days' ? ' (' + sg.when + ')' : ' ' + sg.when))
             .join('; ')
       )
       const chips = segs
@@ -83,7 +92,7 @@ export function buildCrewMessage(db, week, office) {
           const idx = db.projects.findIndex((x) => x.id === sg.pid)
           const c = p ? projColor(p, Math.max(idx, 0)) : '#7f8db0'
           const fg = luminance(c) > 0.62 ? '#173142' : '#ffffff'
-          return '<span style="background:' + c + ';color:' + fg + ';font-weight:700;padding:2px 9px;border-radius:6px;font-size:12px;display:inline-block;margin:1px 4px 1px 0">' + esc(nameOf(db, sg.pid)) + ' · ' + esc(sg.when) + '</span>'
+          return '<span style="background:' + c + ';color:' + fg + ';font-weight:700;padding:2px 9px;border-radius:6px;font-size:12px;display:inline-block;margin:1px 4px 1px 0">' + esc(sg.label || nameOf(db, sg.pid)) + ' · ' + esc(sg.when) + '</span>'
         })
         .join(' ')
       html += '<tr><td style="padding:4px 14px 4px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#16324a">' + esc(per.name) + '</td><td style="padding:4px 0">' + chips + '</td></tr>'

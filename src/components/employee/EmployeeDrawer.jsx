@@ -8,7 +8,7 @@ import { avColor, initials, utilColor } from '../../engine/colors.js'
 import { personUtil } from '../../engine/utilization.js'
 import { personPlanningRoles } from '../../engine/planningRoles.js'
 import { normalizeSkills } from '../../engine/skills.js'
-import { dayVal } from '../../engine/schedule.js'
+import { daySegments } from '../../engine/segments.js'
 import UtilizationSparkline from './UtilizationSparkline.jsx'
 import MoveWorkSuggestions from './MoveWorkSuggestions.jsx'
 
@@ -31,8 +31,7 @@ export default function EmployeeDrawer({ personId, onClose }) {
   const items = {}
   weeks.forEach((w) => {
     for (let d = 0; d < 5; d++) {
-      const v = dayVal(board.days, board.holidays, person.id, w.key, d)
-      if (v) items[v] = (items[v] || 0) + 8
+      daySegments(board, person.id, w.key, d).forEach((s) => (items[s.id] = (items[s.id] || 0) + s.hours))
     }
   })
   const rows = Object.entries(items).sort((a, b) => b[1] - a[1])

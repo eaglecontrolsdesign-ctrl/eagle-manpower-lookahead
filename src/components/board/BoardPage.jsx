@@ -2,7 +2,7 @@ import { useBoard } from '../../context/BoardContext.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { useWeeks } from '../../hooks/useWeeks.js'
 import { usePermissions } from '../../hooks/usePermissions.js'
-import { dayVal } from '../../engine/schedule.js'
+import { daySegments } from '../../engine/segments.js'
 import { personUtil } from '../../engine/utilization.js'
 import { BoardDndProvider } from './DndContext.jsx'
 import BoardHeader from './BoardHeader.jsx'
@@ -20,7 +20,7 @@ export default function BoardPage() {
 
   function personOnJob(personId) {
     if (!ui.jobFilter) return true
-    return weeks.some((w) => [0, 1, 2, 3, 4].some((i) => dayVal(board.days, board.holidays, personId, w.key, i) === ui.jobFilter))
+    return weeks.some((w) => [0, 1, 2, 3, 4].some((i) => daySegments(board, personId, w.key, i).some((s) => s.id === ui.jobFilter)))
   }
 
   let people = ui.officeFilter ? board.people.filter((p) => (p.office || 'Charlotte') === ui.officeFilter) : board.people

@@ -7,7 +7,7 @@ import RequestModal from '../requests/RequestModal.jsx'
 import { useUi } from '../../context/UiContext.jsx'
 import { personJobUtil, personOverheadUtil } from '../../engine/utilization.js'
 import { avColor, initials, utilColor, projColor } from '../../engine/colors.js'
-import { dayVal } from '../../engine/schedule.js'
+import { daySegments, daySignature } from '../../engine/segments.js'
 import { useBoardDnd } from './DndContext.jsx'
 import DayCell from './DayCell.jsx'
 import WeekDemandSummary from './WeekDemandSummary.jsx'
@@ -23,15 +23,16 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 function computeRuns(board, personId, wkKey) {
   const runs = []
   let i = 0
+  const sig = (d) => daySignature(daySegments(board, personId, wkKey, d))
   while (i < 5) {
-    const v = dayVal(board.days, board.holidays, personId, wkKey, i)
+    const v = sig(i)
     if (!v) {
       runs.push([i])
       i++
       continue
     }
     let j = i + 1
-    while (j < 5 && dayVal(board.days, board.holidays, personId, wkKey, j) === v) j++
+    while (j < 5 && sig(j) === v) j++
     runs.push(Array.from({ length: j - i }, (_, k) => i + k))
     i = j
   }
@@ -82,8 +83,9 @@ export default function PeopleBoard({ people, weeks }) {
             const projectIds = new Set()
             weeks.forEach((w) => {
               for (let d = 0; d < 5; d++) {
-                const v = dayVal(board.days, board.holidays, person.id, w.key, d)
-                if (v && v.indexOf('__') !== 0) projectIds.add(v)
+                daySegments(board, person.id, w.key, d).forEach((s) => {
+                  if (s.id.indexOf('__') !== 0) projectIds.add(s.id)
+                })
               }
             })
             const legend = [...projectIds].map((pid) => {

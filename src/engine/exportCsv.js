@@ -1,4 +1,4 @@
-import { dayVal } from './schedule.js'
+import { daySegments } from './segments.js'
 import { personPlanningRoles } from './planningRoles.js'
 import { projColor } from './colors.js'
 import { projectWeekCoverage } from './demand.js'
@@ -15,13 +15,12 @@ export function nameOf(db, pid) {
 export function weekAgg(db, personId, wkKey) {
   const counts = {}
   for (let i = 0; i < 7; i++) {
-    const v = dayVal(db.days, db.holidays, personId, wkKey, i)
-    if (v) counts[v] = (counts[v] || 0) + 1
+    daySegments(db, personId, wkKey, i).forEach((s) => (counts[s.id] = (counts[s.id] || 0) + s.hours / 8))
   }
   return Object.entries(counts).map(([pid, count]) => {
     const p = findProjectOrSpecial(db, pid)
     const idx = db.projects.findIndex((x) => x.id === pid)
-    return { pid, count, name: p ? p.name : pid, color: p ? projColor(p, Math.max(idx, 0)) : '#7f8db0' }
+    return { pid, count: Math.round(count * 100) / 100, name: p ? p.name : pid, color: p ? projColor(p, Math.max(idx, 0)) : '#7f8db0' }
   })
 }
 
