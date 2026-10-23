@@ -14,6 +14,12 @@ export function UiProvider({ children }) {
     setWeekOffset(0)
   }
   const [officeFilter, setOfficeFilter] = useLocalStorageState('eagle_mc_office', '')
+  // Manpower Board: the week whose day columns are widened (click its date header); null = all
+  // weeks share the width equally. Not persisted — it is a way of looking, not a setting.
+  const [focusWeek, setFocusWeek] = useState(null)
+  function toggleFocusWeek(wkKey) {
+    setFocusWeek((prev) => (prev === wkKey ? null : wkKey))
+  }
   const [jobFilter, setJobFilter] = useLocalStorageState('eagle_mc_job', '')
   const [utilizationFilter, setUtilizationFilter] = useState('')
   const [expandedWeek, setExpandedWeek] = useState(null)
@@ -68,6 +74,8 @@ export function UiProvider({ children }) {
     closeEmployee,
     demand,
     openDemand,
+    focusWeek,
+    toggleFocusWeek,
     closeDemand,
     aiPanelOpen,
     setAiPanelOpen,

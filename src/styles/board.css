@@ -6,8 +6,10 @@
   margin-bottom: 14px;
 }
 
+/* The board is its own scrolling area (useFitToViewport keeps it within the screen), so the
+   sideways scrollbar is always visible without scrolling the page to the bottom. */
 .board-wrap {
-  overflow-x: auto;
+  overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--panel);
@@ -38,6 +40,53 @@
   color: var(--muted);
   z-index: 3;
   white-space: nowrap;
+}
+
+/* Fixed column layout: widths come from the <col> elements (PeopleBoard), not from content. */
+.board-table.fixed {
+  table-layout: fixed;
+}
+/* Two sticky header rows: the day names stick just under the week dates (--hdr1 is measured
+   by PeopleBoard), and the corner cell stays above everything. */
+.board-table thead tr:nth-child(2) th {
+  top: var(--hdr1, 44px);
+}
+.board-table th.person-th {
+  z-index: 4;
+}
+.board-table.fixed .day-cell {
+  min-width: 0;
+}
+.board-table th .week-label {
+  cursor: pointer;
+  padding: 1px 6px;
+  margin: 0 -6px;
+  border-radius: 6px;
+}
+.board-table th .week-label:hover {
+  color: var(--text);
+  background: var(--hover-a);
+}
+.board-table th .week-label.on {
+  color: var(--accent);
+}
+.board-table th.week-focused {
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel2));
+}
+/* A narrow (non-expanded) week: one line per chip, no note previews — hover for everything. */
+.day-cell.compact .chip {
+  padding: 2px 4px;
+  font-size: 10px;
+}
+.day-cell.compact .chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.day-cell.compact .chip-note-preview,
+.day-cell.compact .chip-tracker,
+.day-cell.compact .chip-request {
+  display: none;
 }
 
 .week-demand-summary {

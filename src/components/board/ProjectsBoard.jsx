@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
+import { useFitToViewport } from '../../hooks/useFitToViewport.js'
 import { useUi } from '../../context/UiContext.jsx'
 import { projColor } from '../../engine/colors.js'
 import { projectWeekCoverage, coverageClass } from '../../engine/demand.js'
@@ -12,6 +14,8 @@ const CLASS_COLOR = { unplanned: 'var(--muted)', draft: 'var(--warn)', short: 'v
 export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
   const { board } = useBoard()
   const ui = useUi()
+  const wrapRef = useRef(null)
+  useFitToViewport(wrapRef)
   const projects = board.projects
     .map((p, i) => ({ p, i })) // i: position in board.projects, so colours match the people board
     .filter(({ p }) => (!ui.officeFilter || !p.office || p.office === ui.officeFilter) && (!projectFilter || projectFilter(p)))
@@ -24,7 +28,7 @@ export default function ProjectsBoard({ weeks, projectFilter, emptyMessage }) {
   const showHeaders = groups.length > 1
 
   return (
-    <div className="board-wrap">
+    <div className="board-wrap" ref={wrapRef}>
       <table className="board-table">
         <thead>
           <tr>

@@ -27,7 +27,8 @@ function findColored(board, pid) {
 // the user's branch — the cell then neither opens an editor nor takes part in drag-and-drop.
 // requested: an open manpower request covers one of these days (engine/requests.js).
 // onRequest: open the request modal — used instead of the editor when the cell is locked.
-export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign, locked, requested, onRequest }) {
+// compact: another week is expanded, so this one is drawn narrow (one line per chip).
+export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpenAssign, locked, requested, onRequest, compact }) {
   const { board } = useBoard()
   const dnd = useBoardDnd()
   const toast = useToast()
@@ -116,6 +117,7 @@ export default function DayCell({ personId, wkKey, dayIndexes, onOpenNote, onOpe
         'day-cell' +
         (isHoliday ? ' holiday' : !hasValue ? ' empty' : '') +
         (segments.length > 1 ? ' split' : '') +
+        (compact ? ' compact' : '') +
         (locked ? ' locked' : '') +
         (requested ? ' requested' : '')
       }

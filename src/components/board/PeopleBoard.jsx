@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useBoard } from '../../context/BoardContext.jsx'
 import { usePermissions } from '../../hooks/usePermissions.js'
+import { useFitToViewport } from '../../hooks/useFitToViewport.js'
 import { useRequests } from '../../context/RequestsContext.jsx'
 import { openRequestsByCell } from '../../engine/requests.js'
 import RequestModal from '../requests/RequestModal.jsx'
@@ -15,6 +16,14 @@ import NoteModal from '../modals/NoteModal.jsx'
 import AssignmentModal from '../modals/AssignmentModal.jsx'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+// Day-column widths (px): every week equal by default; with a week expanded, that week's days
+// get WIDE and the rest COMPACT. The table uses fixed layout, so content never changes widths.
+const PERSON_COL = 190
+const COL_EQUAL = 84
+const COL_WIDE = 118
+const COL_COMPACT = 58
+const COL_MIN = 34
+const FIT_WEEKS = 4
 
 // Groups a person's Mon–Fri assignments for one week into runs of consecutive identical
 // values, so the board can render one wide cell instead of repeating the same chip. Empty
@@ -49,18 +58,66 @@ export default function PeopleBoard({ people, weeks }) {
   const [requestTarget, setRequestTarget] = useState(null)
   const [noteTarget, setNoteTarget] = useState(null)
   const [assignTarget, setAssignTarget] = useState(null)
+  const focus = weeks.length > 1 && weeks.some((w) => w.key === ui.focusWeek) ? ui.focusWeek : null
+  // Day columns are sized from the board's actual width so the weeks always fit side by side:
+  // equal shares by default, or double weight for the expanded week. Below COL_MIN per day the
+  // board scrolls sideways instead of squeezing further.
+  const wrapRef = useRef(null)
+  useFitToViewport(wrapRef)
+  const [wrapWidth, setWrapWidth] = useState(0)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    // Also tell the stylesheet how tall the first header row is, so the day-names row can stick
+    // just below it instead of sliding over it when the board scrolls.
+    const measure = () => {
+      setWrapWidth(el.clientWidth)
+      const hdr = el.querySelector('thead tr')
+      if (hdr) el.style.setProperty('--hdr1', Math.round(hdr.getBoundingClientRect().height) + 'px')
+    }
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    measure()
+    return () => ro.disconnect()
+  }, [])
+  // At most FIT_WEEKS weeks share the board's width; longer horizons keep that same week width
+  // and scroll sideways, rather than squeezing twelve weeks into the screen.
+  const fitWeeks = Math.min(weeks.length, FIT_WEEKS)
+  const dayCount = fitWeeks * 5
+  const available = Math.max(0, wrapWidth - PERSON_COL)
+  const unit = wrapWidth ? available / (focus ? dayCount + 5 : dayCount) : 0
+  const colWidth = (w) => {
+    if (!wrapWidth) return !focus ? COL_EQUAL : w.key === focus ? COL_WIDE : COL_COMPACT
+    return Math.max(COL_MIN, Math.floor(focus && w.key === focus ? unit * 2 : unit))
+  }
+  const tableMinWidth = PERSON_COL + weeks.reduce((s, w) => s + colWidth(w) * 5, 0)
 
   return (
-    <div className="board-wrap">
-      <table className="board-table">
+    <div className="board-wrap" ref={wrapRef}>
+      <table className="board-table fixed" style={{ minWidth: tableMinWidth }}>
+        <colgroup>
+          <col style={{ width: PERSON_COL }} />
+          {weeks.map((w) => DAY_LABELS.map((d) => <col key={w.key + d} style={{ width: colWidth(w) }} />))}
+        </colgroup>
         <thead>
           <tr>
             <th className="person-th" rowSpan={2}>
               Person
             </th>
             {weeks.map((w) => (
-              <th key={w.key} colSpan={5}>
-                {w.label}
+              <th key={w.key} colSpan={5} className={focus === w.key ? 'week-focused' : ''}>
+                {weeks.length > 1 ? (
+                  <span
+                    className={'week-label' + (focus === w.key ? ' on' : '')}
+                    onClick={() => ui.toggleFocusWeek(w.key)}
+                    title={focus === w.key ? 'Click to give every week equal room again' : 'Click to expand this week'}
+                  >
+                    {w.label}
+                    {focus === w.key ? ' ▾' : ''}
+                  </span>
+                ) : (
+                  w.label
+                )}
                 <WeekDemandSummary wkKey={w.key} />
               </th>
             ))}
@@ -164,6 +221,7 @@ export default function PeopleBoard({ people, weeks }) {
                       onOpenNote={(pid, wk, dis) => setNoteTarget({ pid, wk, dis })}
                       onOpenAssign={(pid, wk, dis) => setAssignTarget({ pid, wk, dis })}
                       locked={lock}
+                      compact={!!focus && focus !== w.key}
                       requested={dayIndexes.map((di) => requestedByCell[person.id + '|' + w.key + '|' + di]).find(Boolean) || null}
                       onRequest={perms.restricted && !perms.viewer ? (pid, wk, dis) => setRequestTarget({ pid, wk, dis }) : undefined}
                     />
